@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../firebase/firebaseConfig';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 
-export default function ProductAnalytics() {
+export default function ReportsAnalytics() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,112 +19,111 @@ export default function ProductAnalytics() {
     return () => unsubscribe();
   }, []);
 
-  // புராஜெக்ட்டில் உள்ள ஆர்டர்களில் இருந்து பொருட்களைப் பிரித்து கணக்கிடுதல்
-  const productMap = {};
+  // கணக்கீடுகள்
+  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.billTotal || 0), 0);
+  const totalNetProfit = orders.reduce((sum, o) => sum + Number(o.netProfit || 0), 0);
+  
+  const thermocolCount = orders.filter(o => o.boxType === 'Thermocol').length;
+  const totalBoxes = orders.length;
 
-  orders.forEach(order => {
-    // order-ல் உள்ள items லிஸ்ட் அல்லது itemsSummary-ஐ கையாளுதல்
-    const items = order.items || [{ name: order.itemsSummary || 'Guppies Pair', type: 'FISH', unitType: 'Pair', qty: 1, price: order.billTotal || 0 }];
-    
-    items.forEach(item => {
-      const name = item.name || 'General Fish';
-      if (!productMap[name]) {
-        productMap[name] = {
-          name: name,
-          category: item.type || 'FISH',
-          totalUnits: 0,
-          totalSales: 0,
-          unitTypes: {}
-        };
-      }
-      const qty = Number(item.qty || 1);
-      const price = Number(item.price || order.billTotal || 0);
-      
-      productMap[name].totalUnits += qty;
-      productMap[name].totalSales += price;
-
-      const uType = item.unitType || 'Pair';
-      productMap[name].unitTypes[uType] = (productMap[name].unitTypes[uType] || 0) + qty;
+  // Excel Export
+  const exportToExcel = () => {
+    let csvContent = "data:text/csv;charset=utf-8,Order ID,Date,Customer Name,Phone,Bill Total,Net Profit,Status,Box Type\n";
+    orders.forEach(o => {
+      csvContent += `"${o.orderId || o.id}","${o.date || ''}","${o.customerName || ''}","${o.phone || ''}","${o.billTotal || 0}","${o.netProfit || 0}","${o.status || 'Pending'}","${o.boxType || 'Cardboard'}"\n`;
     });
-  });
-
-  const productsList = Object.values(productMap);
-  const maxUnits = Math.max(...productsList.map(p => p.totalUnits), 1);
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "business_reports_analysis.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="p-4 max-w-7xl mx-auto space-y-4 text-sm">
       
-      {/* Top Header */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <h1 className="text-xl font-bold text-gray-800">Product & Combo Analytics</h1>
-        <p className="text-xs text-gray-500 mt-0.5">
-          Analyze which fish varieties and combo packs sell the most using charts.
-        </p>
+      {/* Top Header & Export Button */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-gray-800">Business Reports & Net Profit Analysis</h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Overview of sales, net profit, packing metrics, and data export.
+          </p>
+        </div>
+        <button
+          onClick={exportToExcel}
+          className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium px-4 py-2 rounded-lg shadow-sm transition-all flex items-center gap-1.5"
+        >
+          <span>📊 Export Excel Spreadsheet (.xlsx)</span>
+        </button>
       </div>
 
       {loading ? (
-        <div className="text-center py-10 text-gray-400 bg-white rounded-xl border border-gray-100">Loading analytics...</div>
-      ) : productsList.length === 0 ? (
-        <div className="text-center py-10 text-gray-400 bg-white rounded-xl border border-gray-100">No product sales data found yet.</div>
+        <div className="text-center py-10 text-gray-400 bg-white rounded-xl border border-gray-100">Loading reports...</div>
       ) : (
         <>
-          {/* Bar Chart Section */}
-          <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
-            <h3 className="text-center font-bold text-gray-700 text-xs uppercase tracking-wider">Top Selling Fish Varieties & Combos</h3>
+          {/* Top Metric Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
-            <div className="flex justify-center items-center gap-2 text-xs text-gray-500">
-              <span className="w-3 h-3 bg-blue-500 rounded-sm inline-block"></span>
-              <span>Units Sold</span>
+            {/* Total Revenue */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+              <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">TOTAL REVENUE (INCL. SHIPPING)</p>
+              <h3 className="text-3xl font-bold text-indigo-600 mt-1">₹{totalRevenue}</h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 items-end h-64 border-b border-gray-200 pb-2">
-              {productsList.map((prod, idx) => {
-                const heightPercent = (prod.totalUnits / maxUnits) * 100;
-                return (
-                  <div key={idx} className="flex flex-col items-center h-full justify-end">
-                    <span className="text-xs font-bold text-gray-700 mb-1">{prod.totalUnits}</span>
-                    <div 
-                      className="w-full bg-blue-500 rounded-t-lg transition-all duration-500" 
-                      style={{ height: `${Math.max(heightPercent, 15)}%` }}
-                    ></div>
-                    <span className="text-xs font-semibold text-gray-700 mt-2 text-center truncate w-full">{prod.name}</span>
-                  </div>
-                );
-              })}
+            {/* Total Net Profit */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+              <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">TOTAL NET PROFIT (நிகர லாபம்)</p>
+              <h3 className="text-3xl font-bold text-emerald-600 mt-1">₹{totalNetProfit}</h3>
             </div>
+
+            {/* Box Used */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+              <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">THERMOCOL VS CARDBOARD USED</p>
+              <h3 className="text-3xl font-bold text-gray-800 mt-1">{thermocolCount} / {totalBoxes}</h3>
+            </div>
+
           </div>
 
-          {/* Product Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {productsList.map((prod, idx) => (
-              <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-                
-                <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-                  <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                    {prod.category}
-                  </span>
-                  <span className="text-xs font-semibold text-gray-500">{prod.totalUnits} Units Sold</span>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-gray-900 text-base">{prod.name}</h3>
-                  <div className="text-xs text-gray-500 mt-2 space-y-1">
-                    <p className="font-semibold text-[11px] text-gray-400 uppercase">Unit Type Breakdown:</p>
-                    {Object.entries(prod.unitTypes).map(([uType, count], uIdx) => (
-                      <p key={uIdx} className="bg-gray-50 px-2 py-1 rounded inline-block mr-1">
-                        {uType}: {count}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-100 pt-3 flex justify-between items-center text-xs">
-                  <span className="font-semibold text-gray-500">Total Sales:</span>
-                  <span className="font-bold text-emerald-600 text-sm">₹{prod.totalSales}</span>
-                </div>
-
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Order Status Ratio */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
+              <h3 className="text-center font-bold text-gray-700 text-xs uppercase tracking-wider">Order Status Ratio</h3>
+              
+              <div className="flex justify-center items-center gap-4 text-xs text-gray-500 flex-wrap">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-amber-500 rounded-sm"></span> Pending</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-blue-500 rounded-sm"></span> Packed</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-purple-500 rounded-sm"></span> Shipped</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-emerald-500 rounded-sm"></span> Delivered</span>
               </div>
-            ))}
+
+              <div className="flex justify-center py-6">
+                <div className="w-40 h-40 rounded-full border-8 border-amber-500 flex items-center justify-center bg-white shadow-inner">
+                  <div className="w-20 h-20 bg-white rounded-full"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Packaging Box Preference */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
+              <h3 className="text-center font-bold text-gray-700 text-xs uppercase tracking-wider">Packaging Box Preference</h3>
+              
+              <div className="flex justify-center items-center gap-4 text-xs text-gray-500">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-cyan-500 rounded-sm"></span> Thermocol Box 🧊</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-amber-500 rounded-sm"></span> Cardboard Box 📦</span>
+              </div>
+
+              <div className="flex justify-center py-6">
+                <div className="w-40 h-40 rounded-full border-8 border-amber-500 flex items-center justify-center bg-white shadow-inner">
+                  <div className="w-20 h-20 bg-white rounded-full"></div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </>
       )}
