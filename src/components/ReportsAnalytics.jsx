@@ -19,19 +19,16 @@ export default function ReportsAnalytics() {
     return () => unsubscribe();
   }, []);
 
-  // கணக்கீடுகள்
-  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.billTotal || 0), 0);
+  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.revenueTotal || o.billTotal || 0), 0);
   const totalNetProfit = orders.reduce((sum, o) => sum + Number(o.netProfit || 0), 0);
   
-  // Thermocol vs Cardboard கணக்கீடு
-  const thermocolCount = orders.filter(o => o.boxType === 'Thermocol' || o.boxType === 'thermocol').length;
+  const thermocolCount = orders.filter(o => (o.boxType || o.boxChoice) === 'Thermocol').length;
   const totalBoxes = orders.length;
 
-  // Excel Export
   const exportToExcel = () => {
     let csvContent = "data:text/csv;charset=utf-8,Order ID,Date,Customer Name,Phone,Bill Total,Net Profit,Status,Box Type\n";
     orders.forEach(o => {
-      csvContent += `"${o.orderId || o.id}","${o.date || ''}","${o.customerName || ''}","${o.phone || ''}","${o.billTotal || 0}","${o.netProfit || 0}","${o.status || 'Pending'}","${o.boxType || 'Cardboard'}"\n`;
+      csvContent += `"${o.orderId || o.id}","${o.date || ''}","${o.customerName || ''}","${o.phone || o.mobileNumber || ''}","${o.revenueTotal || o.billTotal || 0}","${o.netProfit || 0}","${o.status || o.orderStatus || 'Pending'}","${o.boxType || o.boxChoice || 'Cardboard'}"\n`;
     });
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -44,14 +41,10 @@ export default function ReportsAnalytics() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 text-sm" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      
-      {/* Header & Export Button */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Business Reports & Net Profit Analysis</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Overview of sales, net profit, packing metrics, and data export.
-          </p>
+          <p className="text-xs text-gray-500 mt-0.5">Overview of sales, net profit, packing metrics, and data export.</p>
         </div>
         <button
           onClick={exportToExcel}
@@ -65,33 +58,24 @@ export default function ReportsAnalytics() {
         <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm">Loading reports...</div>
       ) : (
         <>
-          {/* Top Metric Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            
-            {/* Total Revenue */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">TOTAL REVENUE (INCL. SHIPPING)</p>
               <h3 className="text-3xl font-extrabold text-indigo-600 mt-2">₹{totalRevenue}</h3>
             </div>
 
-            {/* Total Net Profit */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">TOTAL NET PROFIT (நிகர லாபம்)</p>
               <h3 className="text-3xl font-extrabold text-emerald-600 mt-2">₹{totalNetProfit}</h3>
             </div>
 
-            {/* Box Used */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">THERMOCOL VS CARDBOARD USED</p>
               <h3 className="text-3xl font-extrabold text-gray-800 mt-2">{thermocolCount} / {totalBoxes}</h3>
             </div>
-
           </div>
 
-          {/* Charts Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            
-            {/* Order Status Ratio */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
               <h3 className="text-center font-bold text-gray-800 text-xs uppercase tracking-wider">Order Status Ratio</h3>
               
@@ -109,7 +93,6 @@ export default function ReportsAnalytics() {
               </div>
             </div>
 
-            {/* Packaging Box Preference */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
               <h3 className="text-center font-bold text-gray-800 text-xs uppercase tracking-wider">Packaging Box Preference</h3>
               
@@ -124,11 +107,9 @@ export default function ReportsAnalytics() {
                 </div>
               </div>
             </div>
-
           </div>
         </>
       )}
-
     </div>
   );
 }

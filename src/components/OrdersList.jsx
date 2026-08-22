@@ -20,17 +20,15 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
     return () => unsubscribe();
   }, []);
 
-  // Status மாற்றும் வசதி
   const handleStatusChange = async (orderId, newStatus) => {
     try {
       const orderRef = doc(db, 'orders', orderId);
-      await updateDoc(orderRef, { status: newStatus });
+      await updateDoc(orderRef, { status: newStatus, orderStatus: newStatus });
     } catch (error) {
       console.error("Error updating status: ", error);
     }
   };
 
-  // Delete செய்யும் வசதி
   const handleDelete = async (orderId) => {
     if (window.confirm("Are you sure you want to delete this order?")) {
       try {
@@ -41,11 +39,10 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
     }
   };
 
-  // Excel Export (CSV format)
   const exportToExcel = () => {
     let csvContent = "data:text/csv;charset=utf-8,Order ID,Date,Customer Name,Phone,Address,Items,Total,Profit,Status\n";
     orders.forEach(o => {
-      csvContent += `"${o.orderId || o.id}","${o.date || ''}","${o.customerName || ''}","${o.phone || ''}","${o.address || ''}","${o.itemsSummary || ''}","${o.billTotal || 0}","${o.netProfit || 0}","${o.status || 'Pending'}"\n`;
+      csvContent += `"${o.orderId || o.id}","${o.date || ''}","${o.customerName || ''}","${o.phone || o.mobileNumber || ''}","${o.address || o.fullAddress || ''}","${o.itemsSummary || ''}","${o.revenueTotal || o.billTotal || 0}","${o.netProfit || 0}","${o.status || o.orderStatus || 'Pending'}"\n`;
     });
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -59,21 +56,15 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
   const filteredOrders = orders.filter(o => 
     (o.customerName && o.customerName.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (o.orderId && o.orderId.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (o.phone && o.phone.includes(searchTerm))
+    ((o.phone || o.mobileNumber) && (o.phone || o.mobileNumber).includes(searchTerm))
   );
 
   return (
     <div className="p-4 max-w-7xl mx-auto space-y-4 text-sm">
-      
-      {/* Top Header Card */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">
-            Orders List ({filteredOrders.length})
-          </h1>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Edit tracking IDs, print bills, or view net profit.
-          </p>
+          <h1 className="text-xl font-bold text-gray-800">Orders List ({filteredOrders.length})</h1>
+          <p className="text-xs text-gray-500 mt-0.5">Edit tracking IDs, print bills, or view net profit.</p>
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -94,7 +85,6 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
         </div>
       </div>
 
-      {/* Orders Table Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
@@ -111,113 +101,70 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
             </thead>
             <tbody className="divide-y divide-gray-100 text-gray-700">
               {loading ? (
-                <tr>
-                  <td colSpan="7" className="text-center py-6 text-gray-400">Loading orders...</td>
-                </tr>
+                <tr><td colSpan="7" className="text-center py-6 text-gray-400">Loading orders...</td></tr>
               ) : filteredOrders.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="text-center py-6 text-gray-400">No matching orders found.</td>
-                </tr>
+                <tr><td colSpan="7" className="text-center py-6 text-gray-400">No matching orders found.</td></tr>
               ) : (
-                filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
-                    
-                    {/* Order ID & Date */}
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-blue-600">{order.orderId || order.id.slice(0, 6)}</div>
-                      <div className="text-[11px] text-gray-400 mt-0.5">{order.date || '2026-08-22'}</div>
-                    </td>
+                filteredOrders.map((order) => {
+                  const currentStatus = order.status || order.orderStatus || 'Pending';
+                  return (
+                    <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-blue-600">{order.orderId || order.id.slice(0, 6)}</div>
+                        <div className="text-[11px] text-gray-400 mt-0.5">{order.date || '2026-08-22'}</div>
+                      </td>
 
-                    {/* Customer & Location */}
-                    <td className="py-3.5 px-4">
-                      <div className="font-medium text-gray-900">{order.customerName}</div>
-                      <div className="text-[11px] text-gray-400">{order.phone}</div>
-                      <div className="text-[11px] text-blue-600 font-medium">{order.city} ({order.pincode})</div>
-                    </td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-medium text-gray-900">{order.customerName}</div>
+                        <div className="text-[11px] text-gray-400">{order.phone || order.mobileNumber}</div>
+                        <div className="text-[11px] text-blue-600 font-medium">{order.city} ({order.pincode})</div>
+                      </td>
 
-                    {/* Items */}
-                    <td className="py-3.5 px-4 text-gray-600 max-w-xs truncate">
-                      {order.itemsSummary || 'Guppies Pair'}
-                    </td>
+                      <td className="py-3.5 px-4 text-gray-600 max-w-xs truncate">
+                        {order.itemsSummary || (order.items && order.items[0]?.varietyName) || 'Guppies Pair'}
+                      </td>
 
-                    {/* Revenue Total */}
-                    <td className="py-3.5 px-4 font-semibold text-gray-900">
-                      ₹{order.billTotal}
-                    </td>
+                      <td className="py-3.5 px-4 font-semibold text-gray-900">
+                        ₹{order.revenueTotal || order.billTotal || 0}
+                      </td>
 
-                    {/* Net Profit */}
-                    <td className="py-3.5 px-4 font-semibold text-emerald-600">
-                      ₹{order.netProfit}
-                    </td>
+                      <td className="py-3.5 px-4 font-semibold text-emerald-600">
+                        ₹{order.netProfit || 0}
+                      </td>
 
-                    {/* Status Dropdown */}
-                    <td className="py-3.5 px-4">
-                      <select
-                        value={order.status || 'Pending'}
-                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                        className={`border rounded-lg px-2 py-1 text-[11px] font-medium focus:outline-none ${
-                          order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          order.status === 'Shipped' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                          'bg-amber-50 text-amber-700 border-amber-200'
-                        }`}
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="Shipped">Shipped</option>
-                        <option value="Delivered">Delivered</option>
-                      </select>
-                    </td>
-
-                    {/* Actions Icons */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        
-                        {/* Sticker Button */}
-                        <button 
-                          onClick={() => onOpenSticker && onOpenSticker(order)}
-                          title="Print Sticker"
-                          className="w-7 h-7 bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center transition-all"
+                      <td className="py-3.5 px-4">
+                        <select
+                          value={currentStatus}
+                          onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                          className={`border rounded-lg px-2 py-1 text-[11px] font-medium focus:outline-none ${
+                            currentStatus === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            currentStatus === 'Shipped' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                            'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}
                         >
-                          📦
-                        </button>
+                          <option value="Pending">Pending</option>
+                          <option value="Packed">Packed</option>
+                          <option value="Shipped">Shipped</option>
+                          <option value="Delivered">Delivered</option>
+                        </select>
+                      </td>
 
-                        {/* View Details Button */}
-                        <button 
-                          onClick={() => onViewOrder && onViewOrder(order)}
-                          title="View Order"
-                          className="w-7 h-7 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center transition-all"
-                        >
-                          👁️
-                        </button>
-
-                        {/* Edit Button */}
-                        <button 
-                          onClick={() => onEditOrder && onEditOrder(order)}
-                          title="Edit Order"
-                          className="w-7 h-7 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center transition-all"
-                        >
-                          ✏️
-                        </button>
-
-                        {/* Delete Button */}
-                        <button 
-                          onClick={() => handleDelete(order.id)}
-                          title="Delete Order"
-                          className="w-7 h-7 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg flex items-center justify-center transition-all"
-                        >
-                          🗑️
-                        </button>
-
-                      </div>
-                    </td>
-
-                  </tr>
-                ))
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button onClick={() => onOpenSticker && onOpenSticker(order)} title="Print Sticker" className="w-7 h-7 bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center transition-all">📦</button>
+                          <button onClick={() => onViewOrder && onViewOrder(order)} title="View Order" className="w-7 h-7 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center transition-all">👁️</button>
+                          <button onClick={() => onEditOrder && onEditOrder(order)} title="Edit Order" className="w-7 h-7 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center transition-all">✏️</button>
+                          <button onClick={() => handleDelete(order.id)} title="Delete Order" className="w-7 h-7 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg flex items-center justify-center transition-all">🗑️</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
-
     </div>
   );
 }

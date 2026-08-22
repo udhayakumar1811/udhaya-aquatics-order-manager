@@ -3,7 +3,6 @@ import { db } from '../firebase/firebaseConfig';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function NewOrder({ setActiveTab }) {
-  // Multiple items support
   const [items, setItems] = useState([
     {
       itemType: 'Fish Variety',
@@ -26,7 +25,7 @@ export default function NewOrder({ setActiveTab }) {
     shippingCharged: 0,
     actualCourier: 0,
     packingBoxCost: 0,
-    courierPartner: 'Professional Courier', // Default to first option
+    courierPartner: 'Professional Courier',
     trackingId: '',
     paymentMode: 'UPI General',
     paymentStatus: 'Paid',
@@ -46,7 +45,6 @@ export default function NewOrder({ setActiveTab }) {
     }));
   };
 
-  // Handle Item Change
   const handleItemChange = (index, e) => {
     const { name, value } = e.target;
     const newItems = [...items];
@@ -54,7 +52,6 @@ export default function NewOrder({ setActiveTab }) {
     setItems(newItems);
   };
 
-  // Add Fish Item
   const addFishItem = () => {
     setItems([...items, {
       itemType: 'Fish Variety',
@@ -66,7 +63,6 @@ export default function NewOrder({ setActiveTab }) {
     }]);
   };
 
-  // Add Combo Item
   const addComboItem = () => {
     setItems([...items, {
       itemType: 'Combo / Offer Pack',
@@ -78,7 +74,6 @@ export default function NewOrder({ setActiveTab }) {
     }]);
   };
 
-  // Remove Item
   const removeItem = (index) => {
     if (items.length > 1) {
       const newItems = items.filter((_, i) => i !== index);
@@ -86,7 +81,6 @@ export default function NewOrder({ setActiveTab }) {
     }
   };
 
-  // Calculations across all items
   const itemsRevenue = items.reduce((sum, item) => sum + (Number(item.sellingPrice) * Number(item.qty)), 0);
   const itemsCost = items.reduce((sum, item) => sum + (Number(item.costPrice) * Number(item.qty)), 0);
 
@@ -98,12 +92,20 @@ export default function NewOrder({ setActiveTab }) {
     e.preventDefault();
     setLoading(true);
     try {
+      const itemsSummary = items.map(i => `${i.varietyName} (${i.qty})`).join(', ');
       await addDoc(collection(db, "orders"), {
         ...formData,
         items,
+        itemsSummary,
         revenueTotal,
+        billTotal: revenueTotal,
         totalExpenses,
         netProfit,
+        status: formData.orderStatus,
+        boxType: formData.boxChoice,
+        phone: formData.mobileNumber,
+        address: formData.fullAddress,
+        date: new Date().toISOString().split('T')[0],
         createdAt: serverTimestamp()
       });
       alert('Order registered successfully and synced to Firebase!');
@@ -129,7 +131,6 @@ export default function NewOrder({ setActiveTab }) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* 1. Customer Details */}
         <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
           <h3 className="font-semibold text-slate-700 mb-3 text-sm">1. CUSTOMER DETAILS (MANDATORY)</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -164,13 +165,12 @@ export default function NewOrder({ setActiveTab }) {
           </div>
         </div>
 
-        {/* 2. Order Items & Production Cost */}
         <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-semibold text-slate-700 text-sm">2. ORDER ITEMS & PRODUCTION COST</h3>
             <div className="flex gap-2">
               <button type="button" onClick={addFishItem} className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-lg text-xs font-semibold border border-blue-200 cursor-pointer">
-                + + Add Fish
+                + Add Fish
               </button>
               <button type="button" onClick={addComboItem} className="bg-purple-50 text-purple-600 hover:bg-purple-100 px-3 py-1 rounded-lg text-xs font-semibold border border-purple-200 cursor-pointer">
                 ✨ + Add Combo
@@ -234,7 +234,6 @@ export default function NewOrder({ setActiveTab }) {
           </div>
         </div>
 
-        {/* 3. Shipping Charges & Packing Expenses */}
         <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
           <h3 className="font-semibold text-slate-700 mb-3 text-sm">3. SHIPPING CHARGES & PACKING EXPENSES</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -261,13 +260,12 @@ export default function NewOrder({ setActiveTab }) {
               </select>
             </div>
             <div className="md:col-span-4">
-              <label className="block text-xs font-medium text-slate-600 mb-1">Courier Tracking Number / ID (Enter after dispatch)</label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Courier Tracking Number / ID</label>
               <input type="text" name="trackingId" value={formData.trackingId} onChange={handleFieldChange} placeholder="e.g. DT12345678IN" className="w-full p-2 border rounded text-sm bg-white" />
             </div>
           </div>
         </div>
 
-        {/* 4. Payment & Order Progress Status */}
         <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
           <h3 className="font-semibold text-slate-700 mb-3 text-sm">4. PAYMENT & ORDER PROGRESS STATUS</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -298,7 +296,6 @@ export default function NewOrder({ setActiveTab }) {
           </div>
         </div>
 
-        {/* 5. Packing Box Choice */}
         <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
           <h3 className="font-semibold text-slate-700 mb-3 text-sm">5. PACKING BOX CHOICE</h3>
           <div className="flex flex-wrap gap-6 items-center">
@@ -324,7 +321,6 @@ export default function NewOrder({ setActiveTab }) {
           </div>
         </div>
 
-        {/* Bottom Summary & Submit */}
         <div className="bg-slate-900 text-white p-4 rounded-xl flex flex-wrap justify-between items-center">
           <div className="flex gap-8">
             <div>
@@ -332,7 +328,7 @@ export default function NewOrder({ setActiveTab }) {
               <p className="text-lg font-bold text-white">₹{revenueTotal}</p>
             </div>
             <div>
-              <p className="text-[11px] text-slate-400">Total Expenses (Cost + Packing + Ship)</p>
+              <p className="text-[11px] text-slate-400">Total Expenses</p>
               <p className="text-lg font-bold text-amber-400">₹{totalExpenses}</p>
             </div>
             <div>
