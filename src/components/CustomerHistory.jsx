@@ -1,123 +1,113 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase/firebaseConfig';
-import { collection, onSnapshot, addDoc } from 'firebase/firestore';
-import * as XLSX from 'xlsx';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 export default function CustomerHistory() {
-  const [customers, setCustomers] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "orders"), (snapshot) => {
-      // Extract unique customers from orders
-      const customerMap = new Map();
-      snapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if (data.mobileNumber && !customerMap.has(data.mobileNumber)) {
-          customerMap.set(data.mobileNumber, {
-            name: data.customerName,
-            mobile: data.mobileNumber,
-            address: data.fullAddress,
-            city: data.city,
-            pincode: data.pincode
-          });
-        }
-      });
-      setCustomers(Array.from(customerMap.values()));
+    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const ordersData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setOrders(ordersData);
+      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  // Export to Excel
-  const exportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(customers);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Customers");
-    XLSX.writeFile(workbook, "Udhaya_Aquatics_Customers.xlsx");
-  };
+  // வாடிக்கையாளர்களின் பெயரிடையேயோ அல்லது போன் நம்பர் மூலமாகவோ ஆர்டர்களைக் குரூப் செய்தல்
+  const customerMap = {};
+  orders.forEach(order => {
+    const key = order.customerName ? order.customerName.trim().toLowerCase() : 'unknown';
+    if (!customerMap[key]) {
+      customerMap[key] = {
+        customerName: order.customerName || 'Unknown Customer',
+        phone: order.phone || '',
+        address: order.address || '',
+        pincode: order.pincode || '',
+        orders: []
+      };
+    }
+    customerMap[key].orders.push(order);
+  });
 
-  // Import from Excel
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      const bstr = evt.target.result;
-      const workbook = XLSX.read(bstr, { type: 'binary' });
-      const wsname = workbook.SheetNames[0];
-      const ws = workbook.Sheets[wsname];
-      const data = XLSX.utils.sheet_to_json(ws);
-      
-      try {
-        for (let row of data) {
-          await addDoc(collection(db, "orders"), {
-            customerName: row.name || row.CustomerName || 'Unknown',
-            mobileNumber: String(row.mobile || row.MobileNumber || ''),
-            fullAddress: row.address || row.FullAddress || '',
-            city: row.city || row.City || '',
-            pincode: row.pincode || row.Pincode || '',
-            fishVarietyName: 'Imported Customer',
-            revenueTotal: 0,
-            netProfit: 0,
-            orderStatus: 'Imported',
-            createdAt: new Date()
-          });
-        }
-        alert('Customers imported successfully to Firebase!');
-      } catch (err) {
-        console.error(err);
-        alert('Error importing file.');
-      }
-    };
-    reader.readAsBinaryString(file);
-  };
+  const customersList = Object.values(customerMap);
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm max-w-7xl mx-auto">
-      <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Customer History ({customers.length})</h2>
-          <p className="text-sm text-slate-500">Manage customer lists, export or import via Excel.</p>
-        </div>
-        <div className="flex gap-3">
-          <label className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition">
-            Import Excel (.xlsx)
-            <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} className="hidden" />
-          </label>
-          <button onClick={exportToExcel} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
-            Export Excel (.xlsx)
-          </button>
-        </div>
+    <div className="p-4 max-w-7xl mx-auto space-y-4 text-sm">
+      
+      {/* Top Header */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <h1 className="text-xl font-bold text-gray-800">Customer Purchase History</h1>
+        <p className="text-xs text-gray-500 mt-0.5">
+          View previous orders and total spent per customer.
+        </p>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-100 text-slate-700 text-xs uppercase tracking-wider">
-              <th className="p-3">Customer Name</th>
-              <th className="p-3">Mobile Number</th>
-              <th className="p-3">Address</th>
-              <th className="p-3">City</th>
-              <th className="p-3">PIN Code</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 text-sm">
-            {customers.length > 0 ? (
-              customers.map((c, i) => (
-                <tr key={i} className="hover:bg-slate-50">
-                  <td className="p-3 font-semibold text-slate-800">{c.name}</td>
-                  <td className="p-3 text-slate-600">{c.mobile}</td>
-                  <td className="p-3 text-slate-600">{c.address}</td>
-                  <td className="p-3 text-slate-600">{c.city}</td>
-                  <td className="p-3 text-slate-600">{c.pincode}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="5" className="text-center py-8 text-slate-400">No customer records found.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Loading & Empty States */}
+      {loading ? (
+        <div className="text-center py-10 text-gray-400 bg-white rounded-xl border border-gray-100">Loading customer history...</div>
+      ) : customersList.length === 0 ? (
+        <div className="text-center py-10 text-gray-400 bg-white rounded-xl border border-gray-100">No customer history found yet.</div>
+      ) : (
+        /* Customer Cards Grid */
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {customersList.map((cust, idx) => {
+            const totalSpent = cust.orders.reduce((sum, o) => sum + Number(o.billTotal || 0), 0);
+
+            return (
+              <div key={idx} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
+                
+                {/* Customer Info Header */}
+                <div className="flex justify-between items-start border-b border-gray-100 pb-3">
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-base">{cust.customerName}</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {cust.phone} | {cust.address}, {cust.pincode}
+                    </p>
+                  </div>
+                  <span className="bg-blue-50 text-blue-600 text-xs font-semibold px-2.5 py-1 rounded-lg">
+                    {cust.orders.length} Orders
+                  </span>
+                </div>
+
+                {/* Total Customer Revenue */}
+                <div className="bg-gray-50 p-3 rounded-lg flex justify-between items-center text-xs">
+                  <span className="font-semibold text-gray-500">Total Customer Revenue:</span>
+                  <span className="font-bold text-emerald-600 text-sm">₹{totalSpent}</span>
+                </div>
+
+                {/* Past Orders Breakdown */}
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">PAST ORDERS BREAKDOWN:</p>
+                  
+                  {cust.orders.map((order) => (
+                    <div key={order.id} className="border border-gray-100 p-3 rounded-lg flex justify-between items-center bg-white hover:bg-gray-50/50 transition-colors">
+                      <div>
+                        <div className="font-semibold text-blue-600 text-xs">
+                          {order.orderId || order.id.slice(0, 6)} <span className="text-gray-400 font-normal">({order.date || '2026-08-22'})</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          • {order.itemsSummary || 'Guppies Pair'}
+                        </div>
+                      </div>
+                      <div className="font-semibold text-gray-900 text-xs">
+                        ₹{order.billTotal}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+            );
+          })}
+        </div>
+      )}
+
     </div>
   );
 }
