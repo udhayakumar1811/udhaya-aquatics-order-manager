@@ -2,12 +2,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
-<<<<<<< HEAD
-
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-=======
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
@@ -21,6 +15,5 @@ createRoot(document.getElementById('root')).render(
         </ToastProvider>
       </AuthProvider>
     </ErrorBoundary>
->>>>>>> claude-upgrade
   </StrictMode>,
 )
