@@ -38,7 +38,7 @@ export default function Dashboard({ setActiveTab }) {
   const totalRevenue = orders.reduce((sum, o) => sum + Number(o.revenueTotal || o.billTotal || 0), 0);
   const totalNetProfit = orders.reduce((sum, o) => sum + Number(o.netProfit || 0), 0);
 
-  // புதிய கணக்கீடுகள்
+  // புதிய கணக்கீடுகள் (Stock, Investment, Courier)
   const totalStockQuantity = products.reduce((sum, p) => sum + Number(p.qty || 0), 0);
   const totalInvestment = products.reduce((sum, p) => sum + (Number(p.costPrice || 0) * Number(p.qty || 0)), 0);
   const totalCourierCharges = orders.reduce((sum, o) => sum + Number(o.actualCourier || 0), 0);
