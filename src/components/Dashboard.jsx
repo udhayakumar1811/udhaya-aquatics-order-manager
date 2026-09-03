@@ -1,22 +1,32 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../firebase/firebaseConfig';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 export default function Dashboard({ setActiveTab }) {
   const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const ordersData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    // Orders fetch
+    const qOrders = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+    const unsubOrders = onSnapshot(qOrders, (snapshot) => {
+      const ordersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setOrders(ordersData);
+    });
+
+    // Products / Stock fetch
+    const qProds = query(collection(db, 'products'));
+    const unsubProds = onSnapshot(qProds, (snapshot) => {
+      const prodsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setProducts(prodsData);
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubOrders();
+      unsubProds();
+    };
   }, []);
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -28,8 +38,15 @@ export default function Dashboard({ setActiveTab }) {
   const totalRevenue = orders.reduce((sum, o) => sum + Number(o.revenueTotal || o.billTotal || 0), 0);
   const totalNetProfit = orders.reduce((sum, o) => sum + Number(o.netProfit || 0), 0);
 
+  // புதிய கணக்கீடுகள்
+  const totalStockQuantity = products.reduce((sum, p) => sum + Number(p.qty || 0), 0);
+  const totalInvestment = products.reduce((sum, p) => sum + (Number(p.costPrice || 0) * Number(p.qty || 0)), 0);
+  const totalCourierCharges = orders.reduce((sum, o) => sum + Number(o.actualCourier || 0), 0);
+
   return (
     <div className="p-4 max-w-7xl mx-auto space-y-4 text-sm">
+      
+      {/* 1. Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -47,6 +64,7 @@ export default function Dashboard({ setActiveTab }) {
         </button>
       </div>
 
+      {/* 2. Metric Cards Grid (Status Wise) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
           <div>
@@ -81,6 +99,42 @@ export default function Dashboard({ setActiveTab }) {
         </div>
       </div>
 
+      {/* 3. New Requested Metric Cards (Stock, Investment, Courier) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        
+        {/* Total Stock Quantity */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+          <div>
+            <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">📦 TOTAL STOCK QUANTITY</p>
+            <h3 className="text-2xl font-bold text-blue-600 mt-0.5">{totalStockQuantity} Units</h3>
+            <p className="text-[11px] text-gray-400 mt-0.5">Available across all varieties</p>
+          </div>
+          <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-base">📦</div>
+        </div>
+
+        {/* Total Investment */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+          <div>
+            <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">💰 TOTAL INVESTMENT</p>
+            <h3 className="text-2xl font-bold text-emerald-600 mt-0.5">₹{totalInvestment.toLocaleString()}</h3>
+            <p className="text-[11px] text-gray-400 mt-0.5">Total capital invested in stock</p>
+          </div>
+          <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-base">💰</div>
+        </div>
+
+        {/* Total Courier Charges */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+          <div>
+            <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">🚚 TOTAL COURIER CHARGES</p>
+            <h3 className="text-2xl font-bold text-rose-600 mt-0.5">₹{totalCourierCharges.toLocaleString()}</h3>
+            <p className="text-[11px] text-gray-400 mt-0.5">Total courier expenses spent</p>
+          </div>
+          <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center text-base">🚚</div>
+        </div>
+
+      </div>
+
+      {/* 4. Financial Summary Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
           <div>
@@ -101,6 +155,7 @@ export default function Dashboard({ setActiveTab }) {
         </div>
       </div>
 
+      {/* 5. Recent Orders Overview Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 flex justify-between items-center border-b border-gray-100">
           <h3 className="font-bold text-gray-800 text-base">Recent Orders Overview</h3>
@@ -133,7 +188,7 @@ export default function Dashboard({ setActiveTab }) {
                     <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="py-3 px-4 font-semibold text-blue-600">{order.orderId || order.id.slice(0, 6)}</td>
                       <td className="py-3 px-4 font-medium text-gray-900">{order.customerName}</td>
-                      <td className="py-3 px-4 text-gray-500">{order.itemsSummary || (order.items && order.items[0]?.varietyName) || '—'}</td>
+                      <td className="py-3 px-4 text-gray-500">{order.itemsSummary || (order.items && order.items[0]?.varietyName) || 'Guppies Pair'}</td>
                       <td className="py-3 px-4 font-semibold text-gray-900">₹{order.revenueTotal || order.billTotal || 0}</td>
                       <td className="py-3 px-4 font-semibold text-emerald-600">₹{order.netProfit || 0}</td>
                       <td className="py-3 px-4">
@@ -153,6 +208,7 @@ export default function Dashboard({ setActiveTab }) {
           </table>
         </div>
       </div>
+
     </div>
   );
 }
