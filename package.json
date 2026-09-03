@@ -14,8 +14,12 @@
     "@tailwindcss/vite": "^4.3.3",
     "firebase": "^12.18.0",
     "react": "^19.2.8",
+<<<<<<< HEAD
     "react-dom": "^19.2.8",
     "xlsx": "^0.18.5"
+=======
+    "react-dom": "^19.2.8"
+>>>>>>> claude-upgrade
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

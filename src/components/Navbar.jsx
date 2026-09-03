@@ -1,6 +1,16 @@
+<<<<<<< HEAD
 import React from 'react';
 
 export default function Navbar({ activeTab, setActiveTab }) {
+=======
+import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+
+export default function Navbar({ activeTab, setActiveTab }) {
+  const { user, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+>>>>>>> claude-upgrade
   const navItems = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'new-order', label: 'New Order' },
@@ -16,11 +26,19 @@ export default function Navbar({ activeTab, setActiveTab }) {
         <div className="bg-blue-600 px-3 py-2 rounded-lg font-bold text-lg">Udhaya Aquatics</div>
         <span className="text-xs text-slate-400 font-semibold tracking-wider">ORDER MANAGER</span>
       </div>
+<<<<<<< HEAD
       <div className="flex flex-wrap gap-2 mt-3 md:mt-0">
+=======
+      <div className="flex flex-wrap items-center gap-2 mt-3 md:mt-0">
+>>>>>>> claude-upgrade
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
+<<<<<<< HEAD
+=======
+            aria-current={activeTab === item.id ? 'page' : undefined}
+>>>>>>> claude-upgrade
             className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === item.id
                 ? 'bg-blue-600 text-white shadow'
@@ -30,7 +48,37 @@ export default function Navbar({ activeTab, setActiveTab }) {
             {item.label}
           </button>
         ))}
+<<<<<<< HEAD
       </div>
     </nav>
   );
 }
+=======
+
+        <div className="relative ml-1">
+          <button
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label="Account menu"
+            aria-expanded={menuOpen}
+            className="w-9 h-9 rounded-full bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold flex items-center justify-center transition-colors"
+            title={user?.email}
+          >
+            {(user?.email || '?').charAt(0).toUpperCase()}
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 mt-2 w-56 bg-white text-slate-800 rounded-lg shadow-lg border border-gray-100 py-2 z-20">
+              <p className="px-3 py-1.5 text-xs text-slate-400 truncate">{user?.email}</p>
+              <button
+                onClick={() => { setMenuOpen(false); logout(); }}
+                className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 text-rose-600 font-medium"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+}
+>>>>>>> claude-upgrade

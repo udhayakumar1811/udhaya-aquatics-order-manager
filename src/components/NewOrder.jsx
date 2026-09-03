@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import { db } from '../firebase/firebaseConfig';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -118,6 +119,12 @@ export default function NewOrder({ setActiveTab }) {
     }
   };
 
+=======
+import React from 'react';
+import OrderForm from './OrderForm';
+
+export default function NewOrder({ setActiveTab }) {
+>>>>>>> claude-upgrade
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -125,6 +132,7 @@ export default function NewOrder({ setActiveTab }) {
           <h2 className="text-2xl font-bold text-slate-800">Add New WhatsApp Order</h2>
           <p className="text-sm text-slate-500">Enter order details, selling price, and cost expenses.</p>
         </div>
+<<<<<<< HEAD
         <div className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200">
           Order ID: ADQ001
         </div>
@@ -341,6 +349,10 @@ export default function NewOrder({ setActiveTab }) {
           </button>
         </div>
       </form>
+=======
+      </div>
+      <OrderForm mode="create" onDone={() => setActiveTab('orders-list')} />
+>>>>>>> claude-upgrade
     </div>
   );
 }

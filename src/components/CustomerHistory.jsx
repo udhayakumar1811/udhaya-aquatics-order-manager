@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
+=======
+import { useState, useEffect } from 'react';
+>>>>>>> claude-upgrade
 import { db } from '../firebase/firebaseConfig';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 
@@ -77,10 +81,17 @@ export default function CustomerHistory() {
                     <div key={order.id} className="border border-gray-100 p-3 rounded-lg flex justify-between items-center bg-white hover:bg-gray-50/50 transition-colors">
                       <div>
                         <div className="font-semibold text-blue-600 text-xs">
+<<<<<<< HEAD
                           {order.orderId || order.id.slice(0, 6)} <span className="text-gray-400 font-normal">({order.date || '2026-08-22'})</span>
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">
                           • {order.itemsSummary || (order.items && order.items[0]?.varietyName) || 'Guppies Pair'}
+=======
+                          {order.orderId || order.id.slice(0, 6)} <span className="text-gray-400 font-normal">({order.date || '—'})</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          • {order.itemsSummary || (order.items && order.items[0]?.varietyName) || '—'}
+>>>>>>> claude-upgrade
                         </div>
                       </div>
                       <div className="font-semibold text-gray-900 text-xs">
