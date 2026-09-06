@@ -17,7 +17,8 @@ export default function Inventory() {
     stockQty: '',
     unit: 'Pairs',
     costPrice: '',
-    sellingPrice: ''
+    sellingPrice: '',
+    minStockAlert: '5'
   });
 
   useEffect(() => {
@@ -36,7 +37,9 @@ export default function Inventory() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'stockQty' || name === 'costPrice' || name === 'sellingPrice' ? (value === '' ? '' : Number(value)) : value
+      [name]: ['stockQty', 'costPrice', 'sellingPrice', 'minStockAlert'].includes(name) 
+        ? (value === '' ? '' : Number(value)) 
+        : value
     }));
   };
 
@@ -48,7 +51,8 @@ export default function Inventory() {
       stockQty: '',
       unit: 'Pairs',
       costPrice: '',
-      sellingPrice: ''
+      sellingPrice: '',
+      minStockAlert: 5
     });
     setShowModal(true);
   };
@@ -61,7 +65,8 @@ export default function Inventory() {
       stockQty: item.stockQty ?? '',
       unit: item.unit || 'Pairs',
       costPrice: item.costPrice ?? '',
-      sellingPrice: item.sellingPrice ?? ''
+      sellingPrice: item.sellingPrice ?? '',
+      minStockAlert: item.minStockAlert ?? 5
     });
     setShowModal(true);
   };
@@ -74,6 +79,7 @@ export default function Inventory() {
         stockQty: Number(formData.stockQty) || 0,
         costPrice: Number(formData.costPrice) || 0,
         sellingPrice: Number(formData.sellingPrice) || 0,
+        minStockAlert: Number(formData.minStockAlert) || 5,
       };
 
       if (editingItem) {
@@ -108,6 +114,8 @@ export default function Inventory() {
     }
   };
 
+  const lowStockItemsCount = items.filter(i => Number(i.stockQty) <= Number(i.minStockAlert || 5)).length;
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 text-sm" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -115,12 +123,20 @@ export default function Inventory() {
           <h1 className="text-xl font-bold text-gray-900">Udhaya Aquatics Inventory & Stock</h1>
           <p className="text-xs text-gray-500 mt-0.5">Manage fish varieties, combos, medicines, feeds, and live stock tracking.</p>
         </div>
-        <button
-          onClick={handleOpenAdd}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2"
-        >
-          <span>➕ Add New Stock Item</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {lowStockItemsCount > 0 && (
+            <div className="bg-rose-50 text-rose-600 px-3 py-2 rounded-xl text-xs font-bold border border-rose-100 flex items-center gap-1.5 animate-pulse">
+              <span>⚠️</span>
+              <span>{lowStockItemsCount} Item(s) Low on Stock!</span>
+            </div>
+          )}
+          <button
+            onClick={handleOpenAdd}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <span>➕ Add New Stock Item</span>
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -144,29 +160,35 @@ export default function Inventory() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-700">
-                {items.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="py-3.5 px-4 font-semibold text-gray-900">{item.itemName}</td>
-                    <td className="py-3.5 px-4">
-                      <span className="bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-lg">
-                        {item.category}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`font-bold px-2.5 py-1 rounded-lg ${Number(item.stockQty) <= 5 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700'}`}>
-                        {item.stockQty} {item.unit} {Number(item.stockQty) <= 5 ? '⚠️ Low' : ''}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-gray-600">₹{item.costPrice}</td>
-                    <td className="py-3.5 px-4 font-semibold text-indigo-600">₹{item.sellingPrice}</td>
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => handleOpenEdit(item)} className="px-2.5 py-1 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg font-medium">Edit</button>
-                        <button onClick={() => handleDelete(item.id)} className="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg font-medium">Delete</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {items.map((item) => {
+                  const isLow = Number(item.stockQty) <= Number(item.minStockAlert || 5);
+                  return (
+                    <tr key={item.id} className={`hover:bg-gray-50/50 transition-colors ${isLow ? 'bg-rose-50/20' : ''}`}>
+                      <td className="py-3.5 px-4 font-semibold text-gray-900">
+                        {item.itemName}
+                        {isLow && <span className="ml-2 text-[10px] bg-rose-100 text-rose-700 font-bold px-1.5 py-0.5 rounded">Low Stock</span>}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-lg">
+                          {item.category}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`font-bold px-2.5 py-1 rounded-lg ${isLow ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-emerald-50 text-emerald-700'}`}>
+                          {item.stockQty} {item.unit}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-gray-600">₹{item.costPrice}</td>
+                      <td className="py-3.5 px-4 font-semibold text-indigo-600">₹{item.sellingPrice}</td>
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button onClick={() => handleOpenEdit(item)} className="px-2.5 py-1 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg font-medium cursor-pointer">Edit</button>
+                          <button onClick={() => handleDelete(item.id)} className="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg font-medium cursor-pointer">Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -228,7 +250,7 @@ export default function Inventory() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Stock Qty *</label>
                   <input
@@ -244,7 +266,24 @@ export default function Inventory() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Cost (₹)</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Low Stock Alert Limit</label>
+                  <input
+                    type="number"
+                    name="minStockAlert"
+                    step="any"
+                    min="0"
+                    required
+                    value={formData.minStockAlert}
+                    onChange={handleChange}
+                    placeholder="e.g. 5"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Cost Price (₹)</label>
                   <input
                     type="number"
                     name="costPrice"
@@ -256,7 +295,7 @@ export default function Inventory() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Selling (₹)</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Selling Price (₹)</label>
                   <input
                     type="number"
                     name="sellingPrice"
@@ -273,13 +312,13 @@ export default function Inventory() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm cursor-pointer"
                 >
                   {editingItem ? 'Update Stock' : 'Save Stock'}
                 </button>
