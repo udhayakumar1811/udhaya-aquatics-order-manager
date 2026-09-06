@@ -45,23 +45,47 @@ function DonutChart({ segments, centerLabel }) {
 export default function ReportsAnalytics() {
   const { showToast } = useToast();
   const [orders, setOrders] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const ordersData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    let ordersLoaded = false;
+    let expensesLoaded = false;
+
+    const checkLoading = () => {
+      if (ordersLoaded && expensesLoaded) setLoading(false);
+    };
+
+    const qOrders = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+    const unsubOrders = onSnapshot(qOrders, (snapshot) => {
+      const ordersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setOrders(ordersData);
-      setLoading(false);
+      ordersLoaded = true;
+      checkLoading();
     });
-    return () => unsubscribe();
+
+    const qExpenses = query(collection(db, 'expenses'), orderBy('date', 'desc'));
+    const unsubExpenses = onSnapshot(qExpenses, (snapshot) => {
+      const expensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setExpenses(expensesData);
+      expensesLoaded = true;
+      checkLoading();
+    });
+
+    return () => {
+      unsubOrders();
+      unsubExpenses();
+    };
   }, []);
 
   const totalRevenue = orders.reduce((sum, o) => sum + Number(o.revenueTotal || o.billTotal || 0), 0);
-  const totalNetProfit = orders.reduce((sum, o) => sum + Number(o.netProfit || 0), 0);
+  const ordersEstimatedProfit = orders.reduce((sum, o) => sum + Number(o.netProfit || 0), 0);
+  
+  // Total business expenses (Petrol, courier, maintenance, stock purchases, etc.)
+  const totalBusinessExpenses = expenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
+
+  // Real Net Profit = Orders Estimated Profit - General Business Expenses
+  const realNetProfit = ordersEstimatedProfit - totalBusinessExpenses;
 
   const thermocolCount = orders.filter(o => (o.boxType || o.boxChoice) === 'Thermocol').length;
   const cardboardCount = orders.filter(o => (o.boxType || o.boxChoice) === 'Cardboard').length;
@@ -92,8 +116,8 @@ export default function ReportsAnalytics() {
     <div className="p-6 max-w-7xl mx-auto space-y-6 text-sm" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Business Reports & Net Profit Analysis</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Overview of sales, net profit, packing metrics, and data export.</p>
+          <h1 className="text-xl font-bold text-gray-900">Business Reports & P&L Analysis</h1>
+          <p className="text-xs text-gray-500 mt-0.5">Overview of sales, total expenses, real net profit, and analytics.</p>
         </div>
         <button
           onClick={exportToCsv}
@@ -105,23 +129,28 @@ export default function ReportsAnalytics() {
 
       {loading ? (
         <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm">Loading reports...</div>
-      ) : orders.length === 0 ? (
-        <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm">No orders yet — reports will appear once you add some.</div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">TOTAL REVENUE (INCL. SHIPPING)</p>
+              <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">TOTAL REVENUE</p>
               <h3 className="text-3xl font-extrabold text-indigo-600 mt-2">₹{totalRevenue.toLocaleString()}</h3>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">TOTAL NET PROFIT (நிகர லாபம்)</p>
-              <h3 className="text-3xl font-extrabold text-emerald-600 mt-2">₹{totalNetProfit.toLocaleString()}</h3>
+              <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">TOTAL EXPENSES (பெட்ரோல்/செலவு)</p>
+              <h3 className="text-3xl font-extrabold text-rose-600 mt-2">₹{totalBusinessExpenses.toLocaleString()}</h3>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">THERMOCOL VS CARDBOARD USED</p>
+              <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">REAL NET PROFIT (உண்மையான லாபம்)</p>
+              <h3 className={`text-3xl font-extrabold mt-2 ${realNetProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                ₹{realNetProfit.toLocaleString()}
+              </h3>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">PACKING BOXES USED</p>
               <h3 className="text-3xl font-extrabold text-gray-800 mt-2">{thermocolCount} / {totalBoxes}</h3>
             </div>
           </div>
