@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase/firebaseConfig';
 import { collection, addDoc, updateDoc, doc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import { generateOrderId } from '../utils/generateOrderId';
@@ -40,6 +41,7 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
     boxChoice: initialOrder?.boxChoice || initialOrder?.boxType || 'Thermocol',
     oxygenFilled: initialOrder?.oxygenFilled ?? true,
     doubleBag: initialOrder?.doubleBag ?? true,
+    salesChannel: initialOrder?.salesChannel || 'Direct / Walk-in',
   });
 
   const [loading, setLoading] = useState(false);
@@ -154,7 +156,7 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-        <h3 className="font-semibold text-slate-700 mb-3 text-sm">1. CUSTOMER DETAILS (MANDATORY)</h3>
+        <h3 className="font-semibold text-slate-700 mb-3 text-sm">1. CUSTOMER DETAILS & SALES CHANNEL (MANDATORY)</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">Customer Name *</label>
@@ -171,10 +173,21 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
             <input type="tel" name="whatsappNumber" value={formData.whatsappNumber} onChange={handleFieldChange} placeholder="Same as mobile or different" className="w-full p-2 border rounded text-sm bg-white" />
             {errors.whatsappNumber && <p className="text-[11px] text-rose-600 mt-1">{errors.whatsappNumber}</p>}
           </div>
-          <div className="md:col-span-3">
+          <div className="md:col-span-2">
             <label className="block text-xs font-medium text-slate-600 mb-1">Full Address *</label>
             <input type="text" name="fullAddress" value={formData.fullAddress} onChange={handleFieldChange} placeholder="Door No, Street Name, Landmark" className="w-full p-2 border rounded text-sm bg-white" />
             {errors.fullAddress && <p className="text-[11px] text-rose-600 mt-1">{errors.fullAddress}</p>}
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Sales Channel / Source (விற்பனை தளம்)</label>
+            <select name="salesChannel" value={formData.salesChannel} onChange={handleFieldChange} className="w-full p-2 border rounded text-sm bg-white font-medium">
+              <option value="YouTube Shorts">YouTube Shorts</option>
+              <option value="Instagram Reels">Instagram Reels</option>
+              <option value="WhatsApp Status">WhatsApp Status</option>
+              <option value="Direct / Walk-in">Direct / Walk-in / Farm Visit</option>
+              <option value="Facebook / Meta">Facebook / Meta</option>
+              <option value="Other / Unknown">Other / Unknown</option>
+            </select>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">City / District *</label>
