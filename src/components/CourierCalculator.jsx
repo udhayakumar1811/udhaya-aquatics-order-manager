@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 export default function CourierCalculator() {
   const [pincode, setPincode] = useState('');
-  const [boxSize, setBoxSize] = useState('Small Thermocol'); // Small Thermocol, Large Thermocol, Small Cardboard, Large Cardboard
+  const [boxSize, setBoxSize] = useState('Small Thermocol'); // Thermocol has box fee, Cardboard is FREE
   
   // Items array to support multiple item types, units, and quantities
   const [items, setItems] = useState([
@@ -39,22 +39,22 @@ export default function CourierCalculator() {
 
     setLoading(true);
     setTimeout(() => {
-      // 1. Box Base Weight & Box Cost Calculation
+      // 1. Box Base Weight & Box Cost Calculation (Cardboard Box is FREE, Thermocol has box fee)
       let boxWeightGrams = 300;
       let boxExtraCost = 0;
 
       if (boxSize === 'Small Thermocol') {
         boxWeightGrams = 350;
-        boxExtraCost = 30; // Extra box charge
+        boxExtraCost = 30; // Thermocol box extra charge
       } else if (boxSize === 'Large Thermocol') {
         boxWeightGrams = 700;
-        boxExtraCost = 60;
+        boxExtraCost = 60; // Thermocol box extra charge
       } else if (boxSize === 'Small Cardboard') {
         boxWeightGrams = 200;
-        boxExtraCost = 15;
+        boxExtraCost = 0; // Cardboard Box is FREE
       } else if (boxSize === 'Large Cardboard') {
         boxWeightGrams = 450;
-        boxExtraCost = 25;
+        boxExtraCost = 0; // Cardboard Box is FREE
       }
 
       // 2. Total Items Weight Calculation based on category & unit
@@ -130,7 +130,6 @@ export default function CourierCalculator() {
         baseCustomerShipping = 200;
       }
 
-      // If Thermocol box is chosen, add box extra cost to customer shipping or show separately
       const recommendedCustomerCharge = baseCustomerShipping + boxExtraCost;
 
       setResult({
@@ -152,7 +151,7 @@ export default function CourierCalculator() {
     <div className="p-6 max-w-6xl mx-auto space-y-6 text-sm" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
         <h1 className="text-xl font-bold text-gray-900">Advanced Courier & Box Weight Calculator</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Calculates precise weight combining Box size, Fish (Pair/Trio/Single), Live Feed, and Rajapalayam Professional Courier tariffs.</p>
+        <p className="text-xs text-gray-500 mt-0.5">Cardboard boxes are free (₹0 box fee), while Thermocol boxes include custom box charges.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -183,8 +182,8 @@ export default function CourierCalculator() {
               >
                 <option value="Small Thermocol">Small Thermocol Box (~350g | +₹30 Box Fee)</option>
                 <option value="Large Thermocol">Large Thermocol Box (~700g | +₹60 Box Fee)</option>
-                <option value="Small Cardboard">Small Cardboard Box (~200g | +₹15 Box Fee)</option>
-                <option value="Large Cardboard">Large Cardboard Box (~450g | +₹25 Box Fee)</option>
+                <option value="Small Cardboard">Small Cardboard Box (~200g | 📦 FREE)</option>
+                <option value="Large Cardboard">Large Cardboard Box (~450g | 📦 FREE)</option>
               </select>
             </div>
 
@@ -266,7 +265,7 @@ export default function CourierCalculator() {
           {!result ? (
             <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center text-gray-400 space-y-2">
               <p className="text-3xl">📦</p>
-              <p className="font-medium">Select your box type, add items (Pairs, Trios, Feed), and enter pincode to compute accurate shipping.</p>
+              <p className="font-medium">Select your box type (Cardboard is Free), add items, and enter pincode to compute accurate shipping.</p>
             </div>
           ) : (
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-5">
@@ -292,7 +291,7 @@ export default function CourierCalculator() {
                 <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-1">
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Customer Shipping Fee</p>
                   <p className="text-2xl font-extrabold text-emerald-600">₹{result.recommendedCustomerCharge}</p>
-                  <p className="text-[10px] text-gray-500">Includes Box Extra Charge (+₹{result.boxExtraCost})</p>
+                  <p className="text-[10px] text-gray-500">{result.boxExtraCost === 0 ? 'Cardboard Box (FREE)' : `Includes Box Fee (+₹${result.boxExtraCost})`}</p>
                 </div>
 
                 <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-1">
@@ -306,8 +305,7 @@ export default function CourierCalculator() {
 
               <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-blue-900 space-y-1.5">
                 <p className="font-bold">💡 Shipment Breakdown Summary:</p>
-                <p>• Box Selected: {result.boxSize} (Box Weight: {result.boxSize.includes('Thermocol') ? (result.boxSize.includes('Small') ? '350g' : '700g') : (result.boxSize.includes('Small') ? '200g' : '450g')})</p>
-                <p>• Box Extra Cost Charged to Customer: ₹{result.boxExtraCost}</p>
+                <p>• Box Selected: {result.boxSize} {result.boxExtraCost === 0 ? '(Cardboard - FREE)' : `(Box Fee: ₹${result.boxExtraCost})`}</p>
                 <p>• Total Gross Weight: {result.totalWeightKg} KG</p>
               </div>
             </div>
