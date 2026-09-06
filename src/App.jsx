@@ -7,6 +7,7 @@ import ShippingSticker from './components/ShippingSticker';
 import Login from './components/Login';
 import { useAuth } from './context/AuthContext';
 
+const ExpenseCategoriesBreakdown = lazy(() => import('./components/ExpenseCategoriesBreakdown'));
 const VarietySalesAnalytics = lazy(() => import('./components/VarietySalesAnalytics'));
 const CustomerLedger = lazy(() => import('./components/CustomerLedger'));
 const DataBackup = lazy(() => import('./components/DataBackup'));
@@ -60,6 +61,7 @@ export default function App() {
           )}
           {activeTab === 'inventory' && <Inventory />}
           {activeTab === 'expenses' && <Expenses />}
+          {activeTab === 'expense-analytics' && <ExpenseCategoriesBreakdown />}
           {activeTab === 'customer-ledger' && <CustomerLedger />}
           {activeTab === 'customer-history' && <CustomerHistory />}
           {activeTab === 'products-combos' && <ProductsCombos />}
