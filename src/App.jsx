@@ -7,6 +7,7 @@ import ShippingSticker from './components/ShippingSticker';
 import Login from './components/Login';
 import { useAuth } from './context/AuthContext';
 
+const VarietySalesAnalytics = lazy(() => import('./components/VarietySalesAnalytics'));
 const CustomerLedger = lazy(() => import('./components/CustomerLedger'));
 const DataBackup = lazy(() => import('./components/DataBackup'));
 const Expenses = lazy(() => import('./components/Expenses'));
@@ -64,6 +65,7 @@ export default function App() {
           {activeTab === 'products-combos' && <ProductsCombos />}
           {activeTab === 'reports-analytics' && <ReportsAnalytics />}
           {activeTab === 'backup' && <DataBackup />}
+          {activeTab === 'variety-analytics' && <VarietySalesAnalytics />}
         </Suspense>
       </main>
 
