@@ -13,11 +13,11 @@ export default function Inventory() {
 
   const [formData, setFormData] = useState({
     itemName: '',
-    category: 'Fish Variety', // Fish Variety, Combo / Offer Pack, Medicines & Feeds, Accessories
-    stockQty: 0,
-    unit: 'Pairs', // Pairs, Pieces, Packets, Litres, Grams
-    costPrice: 0,
-    sellingPrice: 0
+    category: 'Fish Variety',
+    stockQty: '',
+    unit: 'Pairs',
+    costPrice: '',
+    sellingPrice: ''
   });
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export default function Inventory() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'stockQty' || name === 'costPrice' || name === 'sellingPrice' ? Number(value) : value
+      [name]: name === 'stockQty' || name === 'costPrice' || name === 'sellingPrice' ? (value === '' ? '' : Number(value)) : value
     }));
   };
 
@@ -45,10 +45,10 @@ export default function Inventory() {
     setFormData({
       itemName: '',
       category: 'Fish Variety',
-      stockQty: 0,
+      stockQty: '',
       unit: 'Pairs',
-      costPrice: 0,
-      sellingPrice: 0
+      costPrice: '',
+      sellingPrice: ''
     });
     setShowModal(true);
   };
@@ -58,10 +58,10 @@ export default function Inventory() {
     setFormData({
       itemName: item.itemName || '',
       category: item.category || 'Fish Variety',
-      stockQty: item.stockQty || 0,
+      stockQty: item.stockQty ?? '',
       unit: item.unit || 'Pairs',
-      costPrice: item.costPrice || 0,
-      sellingPrice: item.sellingPrice || 0
+      costPrice: item.costPrice ?? '',
+      sellingPrice: item.sellingPrice ?? ''
     });
     setShowModal(true);
   };
@@ -69,15 +69,22 @@ export default function Inventory() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        stockQty: Number(formData.stockQty) || 0,
+        costPrice: Number(formData.costPrice) || 0,
+        sellingPrice: Number(formData.sellingPrice) || 0,
+      };
+
       if (editingItem) {
         await updateDoc(doc(db, 'inventory', editingItem.id), {
-          ...formData,
+          ...payload,
           updatedAt: serverTimestamp()
         });
         showToast('Inventory item updated successfully.', 'success');
       } else {
         await addDoc(collection(db, 'inventory'), {
-          ...formData,
+          ...payload,
           createdAt: serverTimestamp()
         });
         showToast('New inventory item added.', 'success');
@@ -146,8 +153,8 @@ export default function Inventory() {
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`font-bold px-2.5 py-1 rounded-lg ${item.stockQty <= 5 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700'}`}>
-                        {item.stockQty} {item.unit} {item.stockQty <= 5 ? '⚠️ Low' : ''}
+                      <span className={`font-bold px-2.5 py-1 rounded-lg ${Number(item.stockQty) <= 5 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700'}`}>
+                        {item.stockQty} {item.unit} {Number(item.stockQty) <= 5 ? '⚠️ Low' : ''}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-gray-600">₹{item.costPrice}</td>
@@ -180,7 +187,7 @@ export default function Inventory() {
                   required
                   value={formData.itemName}
                   onChange={handleChange}
-                  placeholder="e.g. Full Red Guppy Pair, Moina Culture, Artemia"
+                  placeholder="e.g. Full Red Guppy Pair, 0.3mm Feed, Anti-Ich Medicine"
                   className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -201,18 +208,22 @@ export default function Inventory() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Unit</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Unit (அளவீடு)</label>
                   <select
                     name="unit"
                     value={formData.unit}
                     onChange={handleChange}
                     className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="Pairs">Pairs</option>
-                    <option value="Pieces">Pieces</option>
-                    <option value="Packets">Packets</option>
-                    <option value="Litres">Litres</option>
-                    <option value="Grams">Grams</option>
+                    <option value="Pairs">Pairs (ஜோடி)</option>
+                    <option value="Pieces">Pieces (எண்ணிக்கை)</option>
+                    <option value="Packets">Packets (பாக்கெட்)</option>
+                    <option value="Kg">Kg (கிலோகிராம்)</option>
+                    <option value="Grams">Grams (கிராம்)</option>
+                    <option value="Litres">Litres (லிட்டர்)</option>
+                    <option value="ml">ml (மில்லிலிட்டர்)</option>
+                    <option value="Bottles">Bottles (பாட்டில்)</option>
+                    <option value="Boxes">Boxes (பாக்ஸ்)</option>
                   </select>
                 </div>
               </div>
@@ -223,10 +234,12 @@ export default function Inventory() {
                   <input
                     type="number"
                     name="stockQty"
+                    step="any"
                     min="0"
                     required
                     value={formData.stockQty}
                     onChange={handleChange}
+                    placeholder="e.g. 4.5"
                     className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -235,6 +248,7 @@ export default function Inventory() {
                   <input
                     type="number"
                     name="costPrice"
+                    step="any"
                     min="0"
                     value={formData.costPrice}
                     onChange={handleChange}
@@ -246,6 +260,7 @@ export default function Inventory() {
                   <input
                     type="number"
                     name="sellingPrice"
+                    step="any"
                     min="0"
                     value={formData.sellingPrice}
                     onChange={handleChange}
