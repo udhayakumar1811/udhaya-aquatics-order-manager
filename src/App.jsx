@@ -10,6 +10,7 @@ import { useAuth } from './context/AuthContext';
 const Dashboard = lazy(() => import('./components/Dashboard'));
 const NewOrder = lazy(() => import('./components/NewOrder'));
 const OrdersList = lazy(() => import('./components/OrdersList'));
+const Inventory = lazy(() => import('./components/Inventory'));
 const CustomerHistory = lazy(() => import('./components/CustomerHistory'));
 const ProductsCombos = lazy(() => import('./components/ProductsCombos'));
 const ReportsAnalytics = lazy(() => import('./components/ReportsAnalytics'));
@@ -53,6 +54,7 @@ export default function App() {
               onOpenSticker={setStickerOrder}
             />
           )}
+          {activeTab === 'inventory' && <Inventory />}
           {activeTab === 'customer-history' && <CustomerHistory />}
           {activeTab === 'products-combos' && <ProductsCombos />}
           {activeTab === 'reports-analytics' && <ReportsAnalytics />}
