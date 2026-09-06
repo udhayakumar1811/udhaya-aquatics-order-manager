@@ -7,6 +7,7 @@ import ShippingSticker from './components/ShippingSticker';
 import Login from './components/Login';
 import { useAuth } from './context/AuthContext';
 
+const FeedProductionPlanning = lazy(() => import('./components/FeedProductionPlanning'));
 const WhatsAppMarketing = lazy(() => import('./components/WhatsAppMarketing'));
 const FarmChecklist = lazy(() => import('./components/FarmChecklist'));
 const CustomerCRM = lazy(() => import('./components/CustomerCRM'));
@@ -70,6 +71,7 @@ export default function App() {
           {activeTab === 'customer-history' && <CustomerHistory />}
           {activeTab === 'customer-crm' && <CustomerCRM />}
           {activeTab === 'whatsapp-marketing' && <WhatsAppMarketing />}
+          {activeTab === 'feed-production' && <FeedProductionPlanning />}
           {activeTab === 'products-combos' && <ProductsCombos />}
           {activeTab === 'reports-analytics' && <ReportsAnalytics />}
           {activeTab === 'backup' && <DataBackup />}
