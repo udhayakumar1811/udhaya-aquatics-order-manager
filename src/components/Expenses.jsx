@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase/firebaseConfig';
-import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { useToast } from '../context/ToastContext';
 
 export default function Expenses() {
@@ -8,6 +8,7 @@ export default function Expenses() {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -35,16 +36,50 @@ export default function Expenses() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleOpenAdd = () => {
+    setEditingExpense(null);
+    setFormData({
+      title: '',
+      category: 'Travel / Fuel',
+      amount: '',
+      date: new Date().toISOString().split('T')[0],
+      notes: ''
+    });
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (exp) => {
+    setEditingExpense(exp);
+    setFormData({
+      title: exp.title || '',
+      category: exp.category || 'Travel / Fuel',
+      amount: exp.amount || '',
+      date: exp.date || new Date().toISOString().split('T')[0],
+      notes: exp.notes || ''
+    });
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'expenses'), {
-        ...formData,
-        amount: Number(formData.amount),
-        createdAt: serverTimestamp()
-      });
-      showToast('Expense recorded successfully.', 'success');
+      if (editingExpense) {
+        await updateDoc(doc(db, 'expenses', editingExpense.id), {
+          ...formData,
+          amount: Number(formData.amount),
+          updatedAt: serverTimestamp()
+        });
+        showToast('Expense updated successfully.', 'success');
+      } else {
+        await addDoc(collection(db, 'expenses'), {
+          ...formData,
+          amount: Number(formData.amount),
+          createdAt: serverTimestamp()
+        });
+        showToast('Expense recorded successfully.', 'success');
+      }
       setShowModal(false);
+      setEditingExpense(null);
       setFormData({
         title: '',
         category: 'Travel / Fuel',
@@ -53,7 +88,7 @@ export default function Expenses() {
         notes: ''
       });
     } catch (error) {
-      console.error("Error adding expense: ", error);
+      console.error("Error saving expense: ", error);
       showToast('Could not save expense.', 'error');
     }
   };
@@ -80,7 +115,7 @@ export default function Expenses() {
           <p className="text-xs text-gray-500 mt-0.5">Track petrol/travel costs, courier charges, stock purchases, and farm maintenance.</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={handleOpenAdd}
           className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2"
         >
           <span>💸 Add New Expense</span>
@@ -115,7 +150,7 @@ export default function Expenses() {
                   <th className="py-3 px-4">CATEGORY</th>
                   <th className="py-3 px-4">NOTES</th>
                   <th className="py-3 px-4">AMOUNT</th>
-                  <th className="py-3 px-4 text-center">ACTION</th>
+                  <th className="py-3 px-4 text-center">ACTIONS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-700">
@@ -131,7 +166,10 @@ export default function Expenses() {
                     <td className="py-3.5 px-4 text-gray-500 truncate max-w-xs">{exp.notes || '—'}</td>
                     <td className="py-3.5 px-4 font-bold text-rose-600">₹{exp.amount}</td>
                     <td className="py-3.5 px-4 text-center">
-                      <button onClick={() => handleDelete(exp.id)} className="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg font-medium">Delete</button>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button onClick={() => handleOpenEdit(exp)} className="px-2.5 py-1 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg font-medium">Edit</button>
+                        <button onClick={() => handleDelete(exp.id)} className="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg font-medium">Delete</button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -144,7 +182,7 @@ export default function Expenses() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
           <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full space-y-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-gray-900">Add Business Expense / Investment</h2>
+            <h2 className="text-lg font-bold text-gray-900">{editingExpense ? 'Edit Business Expense' : 'Add Business Expense / Investment'}</h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -228,7 +266,7 @@ export default function Expenses() {
                   type="submit"
                   className="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-sm"
                 >
-                  Save Expense
+                  {editingExpense ? 'Update Expense' : 'Save Expense'}
                 </button>
               </div>
             </form>
