@@ -1,3 +1,4 @@
+import { useState } from 'react';
 
 function Row({ label, value }) {
   return (
@@ -12,6 +13,39 @@ export default function OrderDetailView({ order }) {
   if (!order) return null;
   const status = order.status || order.orderStatus || 'Pending';
 
+  const handleWhatsAppShare = () => {
+    const phone = order.whatsappNumber || order.phone || order.mobileNumber || '';
+    // Format phone number (remove non-numeric characters)
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    let itemsText = '';
+    if (order.items && order.items.length > 0) {
+      itemsText = order.items.map((item, idx) => 
+        `\n${idx + 1}. *${item.varietyName}* (${item.itemType}) - Qty: ${item.qty} - ₹${item.sellingPrice}`
+      ).join('');
+    }
+
+    const message = `Hello *${order.customerName || 'Customer'}*! 👋\n` +
+      `Thank you for your order with *Udhaya Aquatics*! 🐟\n\n` +
+      `📦 *Order ID:* ${order.orderId || order.id?.slice(0, 6)}\n` +
+      `📅 *Date:* ${order.date || '—'}\n` +
+      `🚚 *Courier:* ${order.courierPartner || '—'} (${order.trackingId || 'Pending'})\n` +
+      `📦 *Box Type:* ${order.boxType || order.boxChoice || '—'}\n` +
+      `-----------------------------------\n` +
+      `🛒 *Ordered Items:*${itemsText}\n` +
+      `-----------------------------------\n` +
+      `💰 *Total Amount:* ₹${order.revenueTotal || order.billTotal || 0}\n` +
+      `💳 *Payment Status:* ${order.paymentStatus || 'Paid'}\n\n` +
+      `For any queries, feel free to contact us. Have a great day! ✨`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = cleanPhone 
+      ? `https://wa.me/91${cleanPhone.slice(-10)}?text=${encodedMessage}`
+      : `https://wa.me/?text=${encodedMessage}`;
+
+    window.open(whatsappUrl, '_blank');
+  };
+
   return (
     <div className="space-y-5 text-sm">
       <div className="flex flex-wrap justify-between items-center gap-2">
@@ -19,19 +53,27 @@ export default function OrderDetailView({ order }) {
           <p className="text-xs text-slate-400">Order ID</p>
           <p className="font-bold text-blue-600 text-lg">{order.orderId || order.id?.slice(0, 6)}</p>
         </div>
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            status === 'Delivered'
-              ? 'bg-emerald-50 text-emerald-600'
-              : status === 'Shipped'
-              ? 'bg-purple-50 text-purple-600'
-              : status === 'Packed'
-              ? 'bg-blue-50 text-blue-600'
-              : 'bg-amber-50 text-amber-600'
-          }`}
-        >
-          {status}
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleWhatsAppShare}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>💬 Share WhatsApp Invoice</span>
+          </button>
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              status === 'Delivered'
+                ? 'bg-emerald-50 text-emerald-600'
+                : status === 'Shipped'
+                ? 'bg-purple-50 text-purple-600'
+                : status === 'Packed'
+                ? 'bg-blue-50 text-blue-600'
+                : 'bg-amber-50 text-amber-600'
+            }`}
+          >
+            {status}
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
