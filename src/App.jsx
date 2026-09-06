@@ -7,6 +7,7 @@ import ShippingSticker from './components/ShippingSticker';
 import Login from './components/Login';
 import { useAuth } from './context/AuthContext';
 
+const FarmChecklist = lazy(() => import('./components/FarmChecklist'));
 const CustomerCRM = lazy(() => import('./components/CustomerCRM'));
 const BreedingLog = lazy(() => import('./components/BreedingLog'));
 const ExpenseCategoriesBreakdown = lazy(() => import('./components/ExpenseCategoriesBreakdown'));
@@ -72,6 +73,7 @@ export default function App() {
           {activeTab === 'backup' && <DataBackup />}
           {activeTab === 'variety-analytics' && <VarietySalesAnalytics />}
           {activeTab === 'breeding-log' && <BreedingLog />}
+          {activeTab === 'farm-checklist' && <FarmChecklist />}
         </Suspense>
       </main>
 

@@ -19,7 +19,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'reports-analytics', label: 'Reports' },
     { id: 'backup', label: '💾 Backup' },
     { id: 'variety-analytics', label: '📊 Variety Analytics' },
-    { id: 'breeding-log', label: '🐟 Breeding Log' }
+    { id: 'breeding-log', label: '🐟 Breeding Log' },
+    { id: 'farm-checklist', label: '📋 Farm Checklist' }
   ];
 
   return (
@@ -34,7 +35,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
             key={item.id}
             onClick={() => setActiveTab(item.id)}
             aria-current={activeTab === item.id ? 'page' : undefined}
-            className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
               activeTab === item.id
                 ? 'bg-blue-600 text-white shadow'
                 : 'text-slate-300 hover:bg-slate-800 hover:text-white'
@@ -49,7 +50,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
             onClick={() => setMenuOpen((o) => !o)}
             aria-label="Account menu"
             aria-expanded={menuOpen}
-            className="w-9 h-9 rounded-full bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold flex items-center justify-center transition-colors"
+            className="w-9 h-9 rounded-full bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold flex items-center justify-center transition-colors cursor-pointer"
             title={user?.email}
           >
             {(user?.email || '?').charAt(0).toUpperCase()}
