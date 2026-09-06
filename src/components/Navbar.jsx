@@ -14,6 +14,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'expense-analytics', label: '📉 Expense Analytics' },
     { id: 'customer-ledger', label: '👥 Payment Ledger' },
     { id: 'customer-history', label: 'Customer History' },
+    { id: 'customer-crm', label: '👑 Customer CRM' },
     { id: 'products-combos', label: 'Products & Combos' },
     { id: 'reports-analytics', label: 'Reports' },
     { id: 'backup', label: '💾 Backup' },
@@ -58,7 +59,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
               <p className="px-3 py-1.5 text-xs text-slate-400 truncate">{user?.email}</p>
               <button
                 onClick={() => { setMenuOpen(false); logout(); }}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 text-rose-600 font-medium"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 text-rose-600 font-medium cursor-pointer"
               >
                 Sign out
               </button>
