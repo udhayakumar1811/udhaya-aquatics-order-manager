@@ -15,6 +15,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'customer-ledger', label: '👥 Payment Ledger' },
     { id: 'customer-history', label: 'Customer History' },
     { id: 'customer-crm', label: '👑 Customer CRM' },
+    { id: 'whatsapp-marketing', label: '💬 WhatsApp Broadcast' },
     { id: 'products-combos', label: 'Products & Combos' },
     { id: 'reports-analytics', label: 'Reports' },
     { id: 'backup', label: '💾 Backup' },
