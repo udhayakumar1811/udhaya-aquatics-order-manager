@@ -1,20 +1,70 @@
 import { useState } from 'react';
 
-// Sample regional hub distance & rate logic based on Pincode prefixes
-const COURIER_RATES = [
-  { partner: 'Professional Courier', baseRate: 60, perKgRate: 40, estDays: '2 - 3 Days', reliable: 'High' },
-  { partner: 'ST Courier', baseRate: 50, perKgRate: 35, estDays: '2 - 4 Days', reliable: 'Good' },
-  { partner: 'DTDC Courier', baseRate: 80, perKgRate: 50, estDays: '1 - 2 Days', reliable: 'Excellent' },
-  { partner: 'Anchal / Local Parcel', baseRate: 40, perKgRate: 25, estDays: '3 - 5 Days', reliable: 'Moderate' }
-];
-
 export default function CourierCalculator() {
   const [pincode, setPincode] = useState('');
-  const [weightKg, setWeightKg] = useState(0.5); // Default box weight for guppies with water & oxygen
+  const [pairsCount, setPairsCount] = useState(2); // Number of pairs ordered
+  const [boxType, setBoxType] = useState('Thermocol'); // Thermocol / Cardboard
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleCheck = (e) => {
+  // Function to calculate exact rate based on the Professional Couriers tariff image
+  const calculateTariff = (pin, totalWeightGrams) => {
+    const pinNum = parseInt(pin);
+    let zone = 'Tamil Nadu';
+    let baseRateUpTo1Kg = 50;
+    let above1KgExtraPer250gms = 15;
+
+    // 1. Zone & Tariff Identification from Image
+    if (pin >= 626100 && pin <= 626125) { // Rajapalayam local range
+      zone = 'Local within Rajapalayam';
+      baseRateUpTo1Kg = 50; // Image says Up to 1Kg = 50 (Surface Transit)
+      above1KgExtraPer250gms = 10;
+    } else if (pinNum >= 600000 && pinNum <= 649999) {
+      zone = 'Tamil Nadu';
+      baseRateUpTo1Kg = 50;
+      above1KgExtraPer250gms = 15;
+    } else if (
+      (pinNum >= 670000 && pinNum <= 699999) || // Kerala
+      (pinNum >= 560000 && pinNum <= 592999) || // Karnataka
+      (pinNum >= 500000 && pinNum <= 534999) || // Andhra Pradesh
+      (pinNum >= 500000 && pinNum <= 509999)    // Telangana (approx range)
+    ) {
+      zone = 'Kerala, Karnataka, Andhra Pradesh & Telangana';
+      baseRateUpTo1Kg = 80;
+      above1KgExtraPer250gms = 25;
+    } else {
+      zone = 'Rest Of India (Surface Transit)';
+      baseRateUpTo1Kg = 250;
+      above1KgExtraPer250gms = 50;
+    }
+
+    // 2. Calculate Actual Courier Cost based on weight
+    let actualCourierCost = baseRateUpTo1Kg;
+    if (totalWeightGrams > 1000) {
+      const extraGrams = totalWeightGrams - 1000;
+      const extraSlots = Math.ceil(extraGrams / 250);
+      actualCourierCost += (extraSlots * above1KgExtraPer250gms);
+    }
+
+    // 3. Customer Shipping Charge Slab (as requested)
+    let customerShippingCharge = 100;
+    if (pairsCount >= 1 && pairsCount <= 3) {
+      customerShippingCharge = 100;
+    } else if (pairsCount >= 4 && pairsCount <= 5) {
+      customerShippingCharge = 150;
+    } else {
+      customerShippingCharge = 200;
+    }
+
+    return {
+      zone,
+      actualCourierCost,
+      customerShippingCharge,
+      profitOrLossOnShipping: customerShippingCharge - actualCourierCost
+    };
+  };
+
+  const handleCalculate = (e) => {
     e.preventDefault();
     if (!pincode || pincode.length !== 6) {
       alert('Please enter a valid 6-digit Pincode.');
@@ -23,60 +73,41 @@ export default function CourierCalculator() {
 
     setLoading(true);
     setTimeout(() => {
-      // Basic rule simulation for demo & operational use
-      const pinNum = parseInt(pincode);
-      let region = 'Tamil Nadu (Local / Regional)';
-      let multiplier = 1;
+      // Weight Calculation logic:
+      // Box weight: Thermocol (~300g), Cardboard (~200g)
+      const baseBoxWeight = boxType === 'Thermocol' ? 300 : 200;
+      // Each fish pair bag with water & oxygen ~ 120g
+      const totalFishWeight = pairsCount * 120;
+      const totalWeightGrams = baseBoxWeight + totalFishWeight;
+      const totalWeightKg = (totalWeightGrams / 1000).toFixed(2);
 
-      // Simulated state check based on PIN code ranges
-      if (pinNum >= 600000 && pinNum <= 645999) {
-        region = 'Tamil Nadu & Puducherry';
-        multiplier = 1;
-      } else if (pinNum >= 500000 && pinNum <= 599999) {
-        region = 'Andhra Pradesh & Telangana';
-        multiplier = 1.3;
-      } else if (pinNum >= 560000 && pinNum <= 592999) {
-        region = 'Karnataka';
-        multiplier = 1.2;
-      } else if (pinNum >= 670000 && pinNum <= 699999) {
-        region = 'Kerala';
-        multiplier = 1.2;
-      } else {
-        region = 'Rest of India (North / East / West)';
-        multiplier = 1.6;
-      }
-
-      const calculatedOptions = COURIER_RATES.map(c => {
-        const estimatedCost = Math.round((c.baseRate + (weightKg * c.perKgRate)) * multiplier);
-        return {
-          ...c,
-          estimatedCost,
-          serviceable: true
-        };
-      });
+      const tariffData = calculateTariff(pincode, totalWeightGrams);
 
       setResult({
         pincode,
-        region,
-        options: calculatedOptions
+        pairsCount,
+        boxType,
+        totalWeightGrams,
+        totalWeightKg,
+        ...tariffData
       });
       setLoading(false);
-    }, 400);
+    }, 300);
   };
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 text-sm" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-        <h1 className="text-xl font-bold text-gray-900">Courier Pincode & Shipping Rate Calculator</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Check serviceability and estimate shipping costs across Professional Courier, ST Courier, and DTDC.</p>
+        <h1 className="text-xl font-bold text-gray-900">Professional Courier Rate & Shipping Calculator</h1>
+        <p className="text-xs text-gray-500 mt-0.5">Calculates actual courier tariff (based on Rajapalayam tariff card) and customer shipping slabs automatically.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Input Form */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4 h-fit">
-          <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Calculate Shipping</h2>
+          <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Shipment Parameters</h2>
           
-          <form onSubmit={handleCheck} className="space-y-4">
+          <form onSubmit={handleCalculate} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Destination Pincode *</label>
               <input
@@ -91,16 +122,28 @@ export default function CourierCalculator() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Package Weight (KG)</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Number of Fish Pairs (கப்பி ஜோடிகள்)</label>
+              <input
+                type="number"
+                min="1"
+                max="50"
+                required
+                value={pairsCount}
+                onChange={(e) => setPairsCount(parseInt(e.target.value) || 1)}
+                className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              />
+              <p className="text-[10px] text-gray-400 mt-1">1-3 Pairs: ₹100 | 4-5 Pairs: ₹150 | 6+ Pairs: ₹200</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Packing Box Type</label>
               <select
-                value={weightKg}
-                onChange={(e) => setWeightKg(parseFloat(e.target.value))}
+                value={boxType}
+                onChange={(e) => setBoxType(e.target.value)}
                 className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
               >
-                <option value={0.5}>0.5 KG (Standard Guppy Pair / Trio Box)</option>
-                <option value={1.0}>1.0 KG (Multi-pair Combo Box)</option>
-                <option value={1.5}>1.5 KG (Large Farm Box / Heavy Setup)</option>
-                <option value={2.0}>2.0 KG (Bulk Shipment)</option>
+                <option value="Thermocol">Thermocol Box (~300g)</option>
+                <option value="Cardboard">Cardboard Box (~200g)</option>
               </select>
             </div>
 
@@ -109,7 +152,7 @@ export default function CourierCalculator() {
               disabled={loading}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-3 rounded-xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
             >
-              {loading ? 'Checking Serviceability...' : 'Check Rates & Serviceability'}
+              {loading ? 'Calculating Tariff...' : 'Calculate Shipping & Rates'}
             </button>
           </form>
         </div>
@@ -118,38 +161,50 @@ export default function CourierCalculator() {
         <div className="md:col-span-2 space-y-4">
           {!result ? (
             <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center text-gray-400 space-y-2">
-              <p className="text-3xl">📦</p>
-              <p className="font-medium">Enter a customer pincode and weight to view available courier partners and rates.</p>
+              <p className="text-3xl">⚖️</p>
+              <p className="font-medium">Enter destination pincode and pair quantity to evaluate courier cost vs customer charge.</p>
             </div>
           ) : (
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-5">
               <div className="flex justify-between items-center pb-3 border-b border-gray-100">
                 <div>
                   <h3 className="font-bold text-gray-900 text-base">Pincode: {result.pincode}</h3>
-                  <p className="text-xs text-blue-600 font-semibold mt-0.5">Region: {result.region}</p>
+                  <p className="text-xs text-blue-600 font-semibold mt-0.5">Zone: {result.zone}</p>
                 </div>
-                <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-xl text-xs font-bold border border-emerald-100">
-                  ✅ Serviceable
-                </span>
+                <div className="text-right">
+                  <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-xl text-xs font-bold border border-purple-100">
+                    Total Weight: {result.totalWeightKg} KG ({result.totalWeightGrams} g)
+                  </span>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Available Courier Partners & Estimated Rates</p>
-                
-                <div className="grid grid-cols-1 gap-3">
-                  {result.options.map((opt, index) => (
-                    <div key={index} className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 flex items-center justify-between gap-4 hover:border-blue-200 transition-all">
-                      <div>
-                        <p className="font-bold text-gray-900 text-sm">{opt.partner}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">Est. Delivery: <span className="font-medium text-slate-700">{opt.estDays}</span> • Reliability: <span className="font-medium text-emerald-600">{opt.reliable}</span></p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-extrabold text-blue-600">₹{opt.estimatedCost}</p>
-                        <p className="text-[10px] text-gray-400">Approx shipping charge</p>
-                      </div>
-                    </div>
-                  ))}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-1">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Actual Courier Cost</p>
+                  <p className="text-2xl font-extrabold text-rose-600">₹{result.actualCourierCost}</p>
+                  <p className="text-[10px] text-gray-500">Payable at courier office</p>
                 </div>
+
+                <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-1">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Customer Charge</p>
+                  <p className="text-2xl font-extrabold text-emerald-600">₹{result.customerShippingCharge}</p>
+                  <p className="text-[10px] text-gray-500">Collected from customer</p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-1">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Net Shipping Margin</p>
+                  <p className={`text-2xl font-extrabold ${result.profitOrLossOnShipping >= 0 ? 'text-blue-600' : 'text-amber-600'}`}>
+                    {result.profitOrLossOnShipping >= 0 ? `+₹${result.profitOrLossOnShipping}` : `-₹{Math.abs(result.profitOrLossOnShipping)}`}
+                  </p>
+                  <p className="text-[10px] text-gray-500">Shipping buffer amount</p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-blue-900 space-y-1">
+                <p className="font-bold">💡 Packing Breakdown Analysis:</p>
+                <p>• Box Used: {result.boxType} ({result.boxType === 'Thermocol' ? '300g' : '200g'})</p>
+                <p>• Fish Bags: {result.pairsCount} Pairs (~{result.pairsCount * 120}g with water & oxygen)</p>
+                <p>• Based on Professional Couriers Rajapalayam Surface Transit Tariff card.</p>
               </div>
             </div>
           )}
