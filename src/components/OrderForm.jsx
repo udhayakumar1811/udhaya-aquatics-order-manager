@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { db } from '../firebase/firebaseConfig';
-import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import { generateOrderId } from '../utils/generateOrderId';
 import { validateOrderForm, hasErrors } from '../utils/validation';
 import { useToast } from '../context/ToastContext';
@@ -71,6 +71,32 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
   const totalExpenses = itemsCost + Number(formData.actualCourier || 0) + Number(formData.packingBoxCost || 0);
   const netProfit = revenueTotal - totalExpenses;
 
+  // Function to deduct stock automatically from inventory
+  const deductInventoryStock = async (orderedItems) => {
+    try {
+      const inventoryRef = collection(db, 'inventory');
+      for (const item of orderedItems) {
+        if (!item.varietyName) continue;
+        const q = query(inventoryRef, where('itemName', '==', item.varietyName.trim()));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const docSnap = querySnapshot.docs[0];
+          const currentStock = Number(docSnap.data().stockQty || 0);
+          const orderedQty = Number(item.qty || 0);
+          const newStock = Math.max(0, currentStock - orderedQty);
+
+          await updateDoc(doc(db, 'inventory', docSnap.id), {
+            stockQty: newStock,
+            updatedAt: serverTimestamp()
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error updating inventory stock:', err);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -110,7 +136,11 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
           date: new Date().toISOString().split('T')[0],
           createdAt: serverTimestamp(),
         });
-        showToast(`Order ${orderId} registered successfully.`, 'success');
+        
+        // Trigger automatic stock deduction for new orders
+        await deductInventoryStock(items);
+
+        showToast(`Order ${orderId} registered & stock updated!`, 'success');
       }
       onDone && onDone();
     } catch (error) {
