@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase/firebaseConfig';
-import { collection, addDoc, updateDoc, doc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, serverTimestamp, getDocs, query, where, getDoc } from 'firebase/firestore';
 import { generateOrderId } from '../utils/generateOrderId';
 import { validateOrderForm, hasErrors } from '../utils/validation';
 import { useToast } from '../context/ToastContext';
+import { sendWhatsAppCloudMessage } from '../utils/whatsappCloudApi';
 
 const emptyItem = () => ({
   itemType: 'Fish Variety',
@@ -142,7 +143,29 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
         // Trigger automatic stock deduction for new orders
         await deductInventoryStock(items);
 
-        showToast(`Order ${orderId} registered & stock updated!`, 'success');
+        // Trigger Automated WhatsApp Cloud API Message if enabled
+        try {
+          const apiSettingsSnap = await getDoc(doc(db, 'settings', 'whatsappApi'));
+          if (apiSettingsSnap.exists() && apiSettingsSnap.data().autoSendOnCreate) {
+            const custPhone = formData.whatsappNumber || formData.mobileNumber;
+            if (custPhone) {
+              const msg = `Hello *${formData.customerName}*! Thank you for ordering from *Udhaya Aquatics* 🌊. Your order *${orderId}* has been successfully registered (Total: ₹${revenueTotal}). We will update you once packed and shipped!`;
+              const waResult = await sendWhatsAppCloudMessage(custPhone, msg);
+              if (waResult.success) {
+                showToast(`Order ${orderId} registered & WhatsApp alert sent!`, 'success');
+              } else {
+                showToast(`Order ${orderId} registered, but WhatsApp API failed: ${waResult.error}`, 'warning');
+              }
+            } else {
+              showToast(`Order ${orderId} registered & stock updated!`, 'success');
+            }
+          } else {
+            showToast(`Order ${orderId} registered & stock updated!`, 'success');
+          }
+        } catch (apiErr) {
+          console.error("Auto WhatsApp alert failed:", apiErr);
+          showToast(`Order ${orderId} registered & stock updated!`, 'success');
+        }
       }
       onDone && onDone();
     } catch (error) {

@@ -7,6 +7,7 @@ import ShippingSticker from './components/ShippingSticker';
 import Login from './components/Login';
 import { useAuth } from './context/AuthContext';
 
+const WhatsAppApiSettings = lazy(() => import('./components/WhatsAppApiSettings'));
 const ChannelSalesTracker = lazy(() => import('./components/ChannelSalesTracker'));
 const MortalityTracker = lazy(() => import('./components/MortalityTracker'));
 const FeedProductionPlanning = lazy(() => import('./components/FeedProductionPlanning'));
@@ -73,6 +74,7 @@ export default function App() {
           {activeTab === 'customer-history' && <CustomerHistory />}
           {activeTab === 'customer-crm' && <CustomerCRM />}
           {activeTab === 'whatsapp-marketing' && <WhatsAppMarketing />}
+          {activeTab === 'whatsapp-api-settings' && <WhatsAppApiSettings />}
           {activeTab === 'feed-production' && <FeedProductionPlanning />}
           {activeTab === 'mortality-tracker' && <MortalityTracker />}
           {activeTab === 'channel-sales' && <ChannelSalesTracker />}

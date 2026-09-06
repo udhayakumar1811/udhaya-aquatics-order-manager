@@ -18,6 +18,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
   const managementTools = [
     { id: 'customer-crm', label: '👑 Customer CRM' },
     { id: 'whatsapp-marketing', label: '💬 WhatsApp Broadcast' },
+    { id: 'whatsapp-api-settings', label: '⚙️ WhatsApp Cloud API' },
     { id: 'breeding-log', label: '🐟 Breeding Log' },
     { id: 'farm-checklist', label: '📋 Farm Checklist' },
     { id: 'feed-production', label: '🌿 Live Feed Planning' },
@@ -71,7 +72,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
           </button>
 
           {toolsDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-72 bg-white text-slate-800 rounded-xl shadow-xl border border-gray-100 py-2 z-30">
+            <div className="absolute right-0 mt-2 w-72 bg-white text-slate-800 rounded-xl shadow-xl border border-gray-100 py-2 z-30 max-h-96 overflow-y-auto">
               <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Farm & Business Tools</div>
               {managementTools.map((tool) => (
                 <button
