@@ -2,68 +2,34 @@ import { useState } from 'react';
 
 export default function CourierCalculator() {
   const [pincode, setPincode] = useState('');
-  const [pairsCount, setPairsCount] = useState(2); // Number of pairs ordered
-  const [boxType, setBoxType] = useState('Thermocol'); // Thermocol / Cardboard
+  const [boxSize, setBoxSize] = useState('Small Thermocol'); // Small Thermocol, Large Thermocol, Small Cardboard, Large Cardboard
+  
+  // Items array to support multiple item types, units, and quantities
+  const [items, setItems] = useState([
+    { category: 'Fish', unitType: 'Trio (1M+2F)', qty: 2 },
+    { category: 'Live Feed', unitType: 'Packet (100g)', qty: 1 }
+  ]);
+
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Function to calculate exact rate based on the Professional Couriers tariff image
-  const calculateTariff = (pin, totalWeightGrams) => {
-    const pinNum = parseInt(pin);
-    let zone = 'Tamil Nadu';
-    let baseRateUpTo1Kg = 50;
-    let above1KgExtraPer250gms = 15;
-
-    // 1. Zone & Tariff Identification from Image
-    if (pin >= 626100 && pin <= 626125) { // Rajapalayam local range
-      zone = 'Local within Rajapalayam';
-      baseRateUpTo1Kg = 50; // Image says Up to 1Kg = 50 (Surface Transit)
-      above1KgExtraPer250gms = 10;
-    } else if (pinNum >= 600000 && pinNum <= 649999) {
-      zone = 'Tamil Nadu';
-      baseRateUpTo1Kg = 50;
-      above1KgExtraPer250gms = 15;
-    } else if (
-      (pinNum >= 670000 && pinNum <= 699999) || // Kerala
-      (pinNum >= 560000 && pinNum <= 592999) || // Karnataka
-      (pinNum >= 500000 && pinNum <= 534999) || // Andhra Pradesh
-      (pinNum >= 500000 && pinNum <= 509999)    // Telangana (approx range)
-    ) {
-      zone = 'Kerala, Karnataka, Andhra Pradesh & Telangana';
-      baseRateUpTo1Kg = 80;
-      above1KgExtraPer250gms = 25;
-    } else {
-      zone = 'Rest Of India (Surface Transit)';
-      baseRateUpTo1Kg = 250;
-      above1KgExtraPer250gms = 50;
-    }
-
-    // 2. Calculate Actual Courier Cost based on weight
-    let actualCourierCost = baseRateUpTo1Kg;
-    if (totalWeightGrams > 1000) {
-      const extraGrams = totalWeightGrams - 1000;
-      const extraSlots = Math.ceil(extraGrams / 250);
-      actualCourierCost += (extraSlots * above1KgExtraPer250gms);
-    }
-
-    // 3. Customer Shipping Charge Slab (as requested)
-    let customerShippingCharge = 100;
-    if (pairsCount >= 1 && pairsCount <= 3) {
-      customerShippingCharge = 100;
-    } else if (pairsCount >= 4 && pairsCount <= 5) {
-      customerShippingCharge = 150;
-    } else {
-      customerShippingCharge = 200;
-    }
-
-    return {
-      zone,
-      actualCourierCost,
-      customerShippingCharge,
-      profitOrLossOnShipping: customerShippingCharge - actualCourierCost
-    };
+  const addItemRow = () => {
+    setItems([...items, { category: 'Fish', unitType: 'Pair (1M+1F)', qty: 1 }]);
   };
 
+  const removeItemRow = (index) => {
+    if (items.length > 1) {
+      setItems(items.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleItemChange = (index, field, value) => {
+    const updated = [...items];
+    updated[index][field] = value;
+    setItems(updated);
+  };
+
+  // Professional Couriers Tariff & Weight Calculation Logic
   const handleCalculate = (e) => {
     e.preventDefault();
     if (!pincode || pincode.length !== 6) {
@@ -73,39 +39,126 @@ export default function CourierCalculator() {
 
     setLoading(true);
     setTimeout(() => {
-      // Weight Calculation logic:
-      // Box weight: Thermocol (~300g), Cardboard (~200g)
-      const baseBoxWeight = boxType === 'Thermocol' ? 300 : 200;
-      // Each fish pair bag with water & oxygen ~ 120g
-      const totalFishWeight = pairsCount * 120;
-      const totalWeightGrams = baseBoxWeight + totalFishWeight;
+      // 1. Box Base Weight & Box Cost Calculation
+      let boxWeightGrams = 300;
+      let boxExtraCost = 0;
+
+      if (boxSize === 'Small Thermocol') {
+        boxWeightGrams = 350;
+        boxExtraCost = 30; // Extra box charge
+      } else if (boxSize === 'Large Thermocol') {
+        boxWeightGrams = 700;
+        boxExtraCost = 60;
+      } else if (boxSize === 'Small Cardboard') {
+        boxWeightGrams = 200;
+        boxExtraCost = 15;
+      } else if (boxSize === 'Large Cardboard') {
+        boxWeightGrams = 450;
+        boxExtraCost = 25;
+      }
+
+      // 2. Total Items Weight Calculation based on category & unit
+      let totalItemsWeightGrams = 0;
+      let totalPairsOrItemsCount = 0;
+
+      items.forEach(item => {
+        const q = Number(item.qty) || 1;
+        totalPairsOrItemsCount += q;
+
+        if (item.category === 'Fish') {
+          if (item.unitType.includes('Trio')) {
+            totalItemsWeightGrams += q * 150; // Trio with water & bag ~ 150g
+          } else if (item.unitType.includes('Pair')) {
+            totalItemsWeightGrams += q * 120; // Pair ~ 120g
+          } else {
+            totalItemsWeightGrams += q * 100; // Single/Male/Female ~ 100g
+          }
+        } else if (item.category === 'Live Feed' || item.category === 'Plants') {
+          totalItemsWeightGrams += q * 100; // Feed/Plant packet ~ 100g
+        } else {
+          totalItemsWeightGrams += q * 200; // Accessories ~ 200g
+        }
+      });
+
+      const totalWeightGrams = boxWeightGrams + totalItemsWeightGrams;
       const totalWeightKg = (totalWeightGrams / 1000).toFixed(2);
 
-      const tariffData = calculateTariff(pincode, totalWeightGrams);
+      // 3. Zone & Tariff Identification (Rajapalayam Tariff Card rules)
+      const pinNum = parseInt(pincode);
+      let zone = 'Tamil Nadu';
+      let baseRateUpTo1Kg = 50;
+      let above1KgExtraPer250gms = 15;
+
+      if (pinNum >= 626100 && pinNum <= 626125) {
+        zone = 'Local within Rajapalayam';
+        baseRateUpTo1Kg = 50;
+        above1KgExtraPer250gms = 10;
+      } else if (pinNum >= 600000 && pinNum <= 649999) {
+        zone = 'Tamil Nadu';
+        baseRateUpTo1Kg = 50;
+        above1KgExtraPer250gms = 15;
+      } else if (
+        (pinNum >= 670000 && pinNum <= 699999) || // Kerala
+        (pinNum >= 560000 && pinNum <= 592999) || // Karnataka
+        (pinNum >= 500000 && pinNum <= 534999) || // Andhra Pradesh
+        (pinNum >= 500000 && pinNum <= 509999)    // Telangana
+      ) {
+        zone = 'Kerala, Karnataka, Andhra Pradesh & Telangana';
+        baseRateUpTo1Kg = 80;
+        above1KgExtraPer250gms = 25;
+      } else {
+        zone = 'Rest Of India (Surface Transit)';
+        baseRateUpTo1Kg = 250;
+        above1KgExtraPer250gms = 50;
+      }
+
+      // 4. Actual Courier Cost
+      let actualCourierCost = baseRateUpTo1Kg;
+      if (totalWeightGrams > 1000) {
+        const extraGrams = totalWeightGrams - 1000;
+        const extraSlots = Math.ceil(extraGrams / 250);
+        actualCourierCost += (extraSlots * above1KgExtraPer250gms);
+      }
+
+      // 5. Customer Shipping Charge Slab (Dynamic based on quantity & box)
+      let baseCustomerShipping = 100;
+      if (totalPairsOrItemsCount <= 3) {
+        baseCustomerShipping = 100;
+      } else if (totalPairsOrItemsCount <= 5) {
+        baseCustomerShipping = 150;
+      } else {
+        baseCustomerShipping = 200;
+      }
+
+      // If Thermocol box is chosen, add box extra cost to customer shipping or show separately
+      const recommendedCustomerCharge = baseCustomerShipping + boxExtraCost;
 
       setResult({
         pincode,
-        pairsCount,
-        boxType,
+        zone,
+        boxSize,
+        boxExtraCost,
         totalWeightGrams,
         totalWeightKg,
-        ...tariffData
+        actualCourierCost,
+        recommendedCustomerCharge,
+        profitMargin: recommendedCustomerCharge - actualCourierCost
       });
       setLoading(false);
     }, 300);
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 text-sm" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+    <div className="p-6 max-w-6xl mx-auto space-y-6 text-sm" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-        <h1 className="text-xl font-bold text-gray-900">Professional Courier Rate & Shipping Calculator</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Calculates actual courier tariff (based on Rajapalayam tariff card) and customer shipping slabs automatically.</p>
+        <h1 className="text-xl font-bold text-gray-900">Advanced Courier & Box Weight Calculator</h1>
+        <p className="text-xs text-gray-500 mt-0.5">Calculates precise weight combining Box size, Fish (Pair/Trio/Single), Live Feed, and Rajapalayam Professional Courier tariffs.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Input Form */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4 h-fit">
-          <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Shipment Parameters</h2>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4 h-fit md:col-span-1">
+          <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Shipment Details</h2>
           
           <form onSubmit={handleCalculate} className="space-y-4">
             <div>
@@ -122,29 +175,80 @@ export default function CourierCalculator() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Number of Fish Pairs (கப்பி ஜோடிகள்)</label>
-              <input
-                type="number"
-                min="1"
-                max="50"
-                required
-                value={pairsCount}
-                onChange={(e) => setPairsCount(parseInt(e.target.value) || 1)}
-                className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-              />
-              <p className="text-[10px] text-gray-400 mt-1">1-3 Pairs: ₹100 | 4-5 Pairs: ₹150 | 6+ Pairs: ₹200</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Packing Box Type</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Packing Box Type & Size</label>
               <select
-                value={boxType}
-                onChange={(e) => setBoxType(e.target.value)}
+                value={boxSize}
+                onChange={(e) => setBoxSize(e.target.value)}
                 className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
               >
-                <option value="Thermocol">Thermocol Box (~300g)</option>
-                <option value="Cardboard">Cardboard Box (~200g)</option>
+                <option value="Small Thermocol">Small Thermocol Box (~350g | +₹30 Box Fee)</option>
+                <option value="Large Thermocol">Large Thermocol Box (~700g | +₹60 Box Fee)</option>
+                <option value="Small Cardboard">Small Cardboard Box (~200g | +₹15 Box Fee)</option>
+                <option value="Large Cardboard">Large Cardboard Box (~450g | +₹25 Box Fee)</option>
               </select>
+            </div>
+
+            <div className="space-y-3 pt-2 border-t border-gray-100">
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">Items in Box</label>
+                <button
+                  type="button"
+                  onClick={addItemRow}
+                  className="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-2.5 py-1 rounded-lg font-semibold cursor-pointer"
+                >
+                  + Add Item
+                </button>
+              </div>
+
+              {items.map((item, idx) => (
+                <div key={idx} className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2 relative">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase">Item #{idx + 1}</span>
+                    {items.length > 1 && (
+                      <button type="button" onClick={() => removeItemRow(idx)} className="text-rose-500 text-xs font-bold">×</button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={item.category}
+                      onChange={(e) => handleItemChange(idx, 'category', e.target.value)}
+                      className="p-2 border rounded-lg text-xs bg-white"
+                    >
+                      <option value="Fish">Fish Variety</option>
+                      <option value="Live Feed">Live Feed (Moina/Yeast)</option>
+                      <option value="Plants">Aquarium Plants</option>
+                      <option value="Accessories">Accessories</option>
+                    </select>
+
+                    <select
+                      value={item.unitType}
+                      onChange={(e) => handleItemChange(idx, 'unitType', e.target.value)}
+                      className="p-2 border rounded-lg text-xs bg-white"
+                    >
+                      {item.category === 'Fish' ? (
+                        <>
+                          <option value="Pair (1M+1F)">Pair (1M+1F)</option>
+                          <option value="Trio (1M+2F)">Trio (1M+2F)</option>
+                          <option value="Male Only">Male Only</option>
+                          <option value="Female Only">Female Only</option>
+                        </>
+                      ) : (
+                        <option value="Packet (100g)">Packet (100g)</option>
+                      )}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-0.5">Quantity / Sets</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={item.qty}
+                      onChange={(e) => handleItemChange(idx, 'qty', e.target.value)}
+                      className="w-full p-2 border rounded-lg text-xs bg-white font-medium"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
 
             <button
@@ -152,7 +256,7 @@ export default function CourierCalculator() {
               disabled={loading}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-3 rounded-xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
             >
-              {loading ? 'Calculating Tariff...' : 'Calculate Shipping & Rates'}
+              {loading ? 'Calculating...' : 'Calculate Exact Tariff & Weight'}
             </button>
           </form>
         </div>
@@ -161,8 +265,8 @@ export default function CourierCalculator() {
         <div className="md:col-span-2 space-y-4">
           {!result ? (
             <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center text-gray-400 space-y-2">
-              <p className="text-3xl">⚖️</p>
-              <p className="font-medium">Enter destination pincode and pair quantity to evaluate courier cost vs customer charge.</p>
+              <p className="text-3xl">📦</p>
+              <p className="font-medium">Select your box type, add items (Pairs, Trios, Feed), and enter pincode to compute accurate shipping.</p>
             </div>
           ) : (
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-5">
@@ -182,29 +286,29 @@ export default function CourierCalculator() {
                 <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-1">
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Actual Courier Cost</p>
                   <p className="text-2xl font-extrabold text-rose-600">₹{result.actualCourierCost}</p>
-                  <p className="text-[10px] text-gray-500">Payable at courier office</p>
+                  <p className="text-[10px] text-gray-500">As per Rajapalayam tariff card</p>
                 </div>
 
                 <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-1">
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Customer Charge</p>
-                  <p className="text-2xl font-extrabold text-emerald-600">₹{result.customerShippingCharge}</p>
-                  <p className="text-[10px] text-gray-500">Collected from customer</p>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Customer Shipping Fee</p>
+                  <p className="text-2xl font-extrabold text-emerald-600">₹{result.recommendedCustomerCharge}</p>
+                  <p className="text-[10px] text-gray-500">Includes Box Extra Charge (+₹{result.boxExtraCost})</p>
                 </div>
 
                 <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-1">
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Net Shipping Margin</p>
-                  <p className={`text-2xl font-extrabold ${result.profitOrLossOnShipping >= 0 ? 'text-blue-600' : 'text-amber-600'}`}>
-                    {result.profitOrLossOnShipping >= 0 ? `+₹${result.profitOrLossOnShipping}` : `-₹{Math.abs(result.profitOrLossOnShipping)}`}
+                  <p className={`text-2xl font-extrabold ${result.profitMargin >= 0 ? 'text-blue-600' : 'text-amber-600'}`}>
+                    {result.profitMargin >= 0 ? `+₹${result.profitMargin}` : `-₹{Math.abs(result.profitMargin)}`}
                   </p>
-                  <p className="text-[10px] text-gray-500">Shipping buffer amount</p>
+                  <p className="text-[10px] text-gray-500">Buffer / profit margin</p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-blue-900 space-y-1">
-                <p className="font-bold">💡 Packing Breakdown Analysis:</p>
-                <p>• Box Used: {result.boxType} ({result.boxType === 'Thermocol' ? '300g' : '200g'})</p>
-                <p>• Fish Bags: {result.pairsCount} Pairs (~{result.pairsCount * 120}g with water & oxygen)</p>
-                <p>• Based on Professional Couriers Rajapalayam Surface Transit Tariff card.</p>
+              <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-blue-900 space-y-1.5">
+                <p className="font-bold">💡 Shipment Breakdown Summary:</p>
+                <p>• Box Selected: {result.boxSize} (Box Weight: {result.boxSize.includes('Thermocol') ? (result.boxSize.includes('Small') ? '350g' : '700g') : (result.boxSize.includes('Small') ? '200g' : '450g')})</p>
+                <p>• Box Extra Cost Charged to Customer: ₹{result.boxExtraCost}</p>
+                <p>• Total Gross Weight: {result.totalWeightKg} KG</p>
               </div>
             </div>
           )}
