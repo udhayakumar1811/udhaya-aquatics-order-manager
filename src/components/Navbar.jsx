@@ -21,6 +21,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'breeding-log', label: '🐟 Breeding Log' },
     { id: 'farm-checklist', label: '📋 Farm Checklist' },
     { id: 'feed-production', label: '🌿 Live Feed Planning' },
+    { id: 'mortality-tracker', label: '⚠️ Mortality & Loss Tracker' },
     { id: 'expense-analytics', label: '📉 Expense Analytics' },
     { id: 'variety-analytics', label: '📊 Variety Analytics' },
     { id: 'customer-history', label: 'Customer History' },
@@ -69,7 +70,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
           </button>
 
           {toolsDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-60 bg-white text-slate-800 rounded-xl shadow-xl border border-gray-100 py-2 z-30">
+            <div className="absolute right-0 mt-2 w-64 bg-white text-slate-800 rounded-xl shadow-xl border border-gray-100 py-2 z-30">
               <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Farm & Business Tools</div>
               {managementTools.map((tool) => (
                 <button
