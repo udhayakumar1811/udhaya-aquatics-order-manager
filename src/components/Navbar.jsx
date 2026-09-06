@@ -13,7 +13,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'expenses', label: '💸 Expenses' },
     { id: 'customer-history', label: 'Customer History' },
     { id: 'products-combos', label: 'Products & Combos' },
-    { id: 'reports-analytics', label: 'Reports & Analytics' }
+    { id: 'reports-analytics', label: 'Reports' },
+    { id: 'backup', label: '💾 Backup' }
   ];
 
   return (
