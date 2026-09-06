@@ -15,25 +15,53 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'customer-ledger', label: '👥 Payment Ledger' }
   ];
 
-  const managementTools = [
-    { id: 'customer-crm', label: '👑 Customer CRM' },
-    { id: 'whatsapp-marketing', label: '💬 WhatsApp Broadcast' },
-    { id: 'whatsapp-api-settings', label: '⚙️ WhatsApp Cloud API' },
-    { id: 'breeding-log', label: '🐟 Breeding Log' },
-    { id: 'farm-checklist', label: '📋 Farm Checklist' },
-    { id: 'feed-production', label: '🌿 Live Feed Planning' },
-    { id: 'mortality-tracker', label: '⚠️ Mortality & Loss Tracker' },
-    { id: 'channel-sales', label: '📈 Sales Channels (YouTube/Insta)' },
-    { id: 'expense-analytics', label: '📉 Expense Analytics' },
-    { id: 'variety-analytics', label: '📊 Variety Analytics' },
-    { id: 'customer-history', label: 'Customer History' },
-    { id: 'products-combos', label: 'Products & Combos' },
-    { id: 'reports-analytics', label: 'Reports' },
-    { id: 'backup', label: '💾 Backup' }
+  // Categorized Management Tools Groups
+  const toolCategories = [
+    {
+      title: '👑 Customer & Marketing',
+      items: [
+        { id: 'customer-crm', label: 'Customer CRM' },
+        { id: 'whatsapp-marketing', label: 'WhatsApp Broadcast' },
+        { id: 'whatsapp-api-settings', label: 'WhatsApp Cloud API' }
+      ]
+    },
+    {
+      title: '🐟 Farm & Production',
+      items: [
+        { id: 'breeding-log', label: 'Breeding Log' },
+        { id: 'feed-production', label: 'Live Feed Planning' },
+        { id: 'mortality-tracker', label: 'Mortality & Loss Tracker' },
+        { id: 'farm-checklist', label: 'Farm Checklist' }
+      ]
+    },
+    {
+      title: '📊 Analytics & Reports',
+      items: [
+        { id: 'channel-sales', label: 'Sales Channels (YouTube/Insta)' },
+        { id: 'expense-analytics', label: 'Expense Analytics' },
+        { id: 'variety-analytics', label: 'Variety Sales Analytics' },
+        { id: 'reports-analytics', label: 'Reports & P&L' },
+        { id: 'customer-history', label: 'Customer History' }
+      ]
+    },
+    {
+      title: '⚙️ Utilities & Tools',
+      items: [
+        { id: 'courier-calculator', label: 'Courier & Pincode Calculator' },
+        { id: 'products-combos', label: 'Products & Combos' },
+        { id: 'backup', label: 'Data Backup' }
+      ]
+    }
   ];
 
-  const isManagementToolActive = managementTools.some(t => t.id === activeTab);
-  const activeToolLabel = managementTools.find(t => t.id === activeTab)?.label || '⚙️ Management Tools';
+  // Flattened array to check if any management tool is active
+  const allManagementToolIds = toolCategories.flatMap(cat => cat.items.map(i => i.id));
+  const isManagementToolActive = allManagementToolIds.includes(activeTab);
+  
+  const activeToolObj = toolCategories
+    .flatMap(cat => cat.items)
+    .find(i => i.id === activeTab);
+  const activeToolLabel = activeToolObj ? activeToolObj.label : '⚙️ Management Tools';
 
   return (
     <nav className="bg-slate-900 text-white px-6 py-4 flex flex-wrap items-center justify-between shadow-md relative">
@@ -57,7 +85,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
           </button>
         ))}
 
-        {/* Management Tools Dropdown */}
+        {/* Categorized Management Tools Dropdown */}
         <div className="relative">
           <button
             onClick={() => setToolsDropdownOpen((o) => !o)}
@@ -72,21 +100,31 @@ export default function Navbar({ activeTab, setActiveTab }) {
           </button>
 
           {toolsDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-72 bg-white text-slate-800 rounded-xl shadow-xl border border-gray-100 py-2 z-30 max-h-96 overflow-y-auto">
-              <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Farm & Business Tools</div>
-              {managementTools.map((tool) => (
-                <button
-                  key={tool.id}
-                  onClick={() => {
-                    setActiveTab(tool.id);
-                    setToolsDropdownOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${
-                    activeTab === tool.id ? 'bg-blue-50 text-blue-600 font-bold' : 'hover:bg-slate-50 text-slate-700'
-                  }`}
-                >
-                  {tool.label}
-                </button>
+            <div className="absolute right-0 mt-2 w-[720px] bg-white text-slate-800 rounded-2xl shadow-2xl border border-gray-100 p-4 z-40 grid grid-cols-2 md:grid-cols-4 gap-4 max-h-[85vh] overflow-y-auto">
+              {toolCategories.map((category, catIdx) => (
+                <div key={catIdx} className="space-y-2">
+                  <div className="text-[11px] font-extrabold text-blue-600 uppercase tracking-wider pb-1 border-b border-gray-100">
+                    {category.title}
+                  </div>
+                  <div className="space-y-1">
+                    {category.items.map((tool) => (
+                      <button
+                        key={tool.id}
+                        onClick={() => {
+                          setActiveTab(tool.id);
+                          setToolsDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                          activeTab === tool.id
+                            ? 'bg-blue-600 text-white font-bold shadow-sm'
+                            : 'hover:bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {tool.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -104,7 +142,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
             {(user?.email || '?').charAt(0).toUpperCase()}
           </button>
           {menuOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white text-slate-800 rounded-lg shadow-lg border border-gray-100 py-2 z-30">
+            <div className="absolute right-0 mt-2 w-56 bg-white text-slate-800 rounded-xl shadow-xl border border-gray-100 py-2 z-40">
               <p className="px-3 py-1.5 text-xs text-slate-400 truncate">{user?.email}</p>
               <button
                 onClick={() => { setMenuOpen(false); logout(); }}
