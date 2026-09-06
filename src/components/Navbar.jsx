@@ -11,6 +11,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'orders-list', label: 'Orders List' },
     { id: 'inventory', label: '📦 Stock' },
     { id: 'expenses', label: '💸 Expenses' },
+    { id: 'customer-ledger', label: '👥 Payment Ledger' },
     { id: 'customer-history', label: 'Customer History' },
     { id: 'products-combos', label: 'Products & Combos' },
     { id: 'reports-analytics', label: 'Reports' },
