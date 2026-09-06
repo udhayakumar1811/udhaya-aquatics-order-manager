@@ -17,7 +17,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'products-combos', label: 'Products & Combos' },
     { id: 'reports-analytics', label: 'Reports' },
     { id: 'backup', label: '💾 Backup' },
-    { id: 'variety-analytics', label: '📊 Variety Analytics' }
+    { id: 'variety-analytics', label: '📊 Variety Analytics' },
+    { id: 'breeding-log', label: '🐟 Breeding Log' }
   ];
 
   return (
