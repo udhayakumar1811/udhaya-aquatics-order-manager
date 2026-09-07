@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Modal from './components/Modal';
 import OrderForm from './components/OrderForm';
@@ -42,15 +42,45 @@ function TabLoading() {
 export default function App() {
   const { user, authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isPublicCatalogRoute, setIsPublicCatalogRoute] = useState(false);
 
   const [editingOrder, setEditingOrder] = useState(null);
   const [viewingOrder, setViewingOrder] = useState(null);
   const [stickerOrder, setStickerOrder] = useState(null);
 
+  // Check if URL contains /catalog for public view
+  useEffect(() => {
+    const checkRoute = () => {
+      if (window.location.pathname.includes('/catalog') || window.location.hash.includes('/catalog')) {
+        setIsPublicCatalogRoute(true);
+      }
+    };
+    checkRoute();
+    window.addEventListener('popstate', checkRoute);
+    return () => window.removeEventListener('popstate', checkRoute);
+  }, []);
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
         <p className="text-slate-400 text-sm">Loading...</p>
+      </div>
+    );
+  }
+
+  // If URL explicitly points to public catalog, bypass login and render ONLY Digital Catalog
+  if (isPublicCatalogRoute) {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans">
+        <header className="bg-slate-900 text-white px-6 py-4 shadow-md flex justify-between items-center">
+          <div className="font-bold text-lg">Udhaya Aquatics — Public Stock Catalog</div>
+          <a href="/" className="text-xs bg-blue-600 px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700">Admin Login</a>
+        </header>
+        <main>
+          <Suspense fallback={<TabLoading />}>
+            <DigitalCatalog />
+          </Suspense>
+        </main>
       </div>
     );
   }
@@ -88,7 +118,7 @@ export default function App() {
           {activeTab === 'mortality-tracker' && <MortalityTracker />}
           {activeTab === 'channel-sales' && <ChannelSalesTracker />}
           {activeTab === 'courier-calculator' && <CourierCalculator />}
-          {activeTab === 'profit-loss-report' && <ProfitLossReport />}
+          {activeTab === 'profit-loss-report' . report && <ProfitLossReport />}
           {activeTab === 'fish-grading' && <FishGradingLog />}
           {activeTab === 'geo-analytics' && <GeographicSalesAnalytics />}
           {activeTab === 'recycle-bin' && <RecycleBin />}
