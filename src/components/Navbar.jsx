@@ -23,6 +23,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
       title: '👑 Customer & Marketing',
       items: [
         { id: 'customer-crm', label: '👑 Customer CRM' },
+        { id: 'digital-catalog', label: '🌐 Digital Stock Catalog & Media' },
         { id: 'whatsapp-marketing', label: '📢 WhatsApp Broadcast' },
         { id: 'whatsapp-api-settings', label: '⚙️ WhatsApp Cloud API' }
       ]

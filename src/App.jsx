@@ -7,6 +7,7 @@ import ShippingSticker from './components/ShippingSticker';
 import Login from './components/Login';
 import { useAuth } from './context/AuthContext';
 
+const DigitalCatalog = lazy(() => import('./components/DigitalCatalog'));
 const WholesaleInvestmentLog = lazy(() => import('./components/WholesaleInvestmentLog'));
 const RecycleBin = lazy(() => import('./components/RecycleBin'));
 const GeographicSalesAnalytics = lazy(() => import('./components/GeographicSalesAnalytics'));
@@ -74,6 +75,7 @@ export default function App() {
             />
           )}
           {activeTab === 'inventory' && <Inventory />}
+          {activeTab === 'digital-catalog' && <DigitalCatalog />}
           {activeTab === 'expenses' && <Expenses />}
           {activeTab === 'wholesale-investment' && <WholesaleInvestmentLog />}
           {activeTab === 'expense-analytics' && <ExpenseCategoriesBreakdown />}
