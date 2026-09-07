@@ -54,7 +54,7 @@ export default function CustomerLedger() {
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Customer Payment Ledger & Dues</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Track paid and pending payments from customers easily.</p>
+          <p className="text-xs text-gray-500 mt-0.5">Track paid and pending payments from customers easily, and send WhatsApp reminders.</p>
         </div>
         <div className="w-full md:w-72">
           <input
@@ -94,31 +94,49 @@ export default function CustomerLedger() {
                   <th className="py-3 px-4">MOBILE</th>
                   <th className="py-3 px-4">TOTAL AMOUNT</th>
                   <th className="py-3 px-4">PAYMENT MODE</th>
-                  <th className="py-3 px-4 text-center">PAYMENT STATUS</th>
+                  <th className="py-3 px-4 text-center">PAYMENT STATUS & WHATSAPP</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-700">
                 {filteredOrders.map((order) => {
                   const payStatus = order.paymentStatus || 'Paid';
+                  const customerPhone = order.phone || order.mobileNumber || '';
+                  const orderTotal = order.revenueTotal || order.billTotal || 0;
                   return (
                     <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="py-3.5 px-4 font-bold text-gray-900">{order.orderId || '—'}</td>
                       <td className="py-3.5 px-4 text-gray-500">{order.date || '—'}</td>
                       <td className="py-3.5 px-4 font-semibold text-gray-900">{order.customerName}</td>
-                      <td className="py-3.5 px-4 text-gray-600">{order.phone || order.mobileNumber || '—'}</td>
-                      <td className="py-3.5 px-4 font-bold text-gray-900">₹{order.revenueTotal || order.billTotal || 0}</td>
+                      <td className="py-3.5 px-4 text-gray-600">{customerPhone || '—'}</td>
+                      <td className="py-3.5 px-4 font-bold text-gray-900">₹{orderTotal}</td>
                       <td className="py-3.5 px-4 text-gray-500">{order.paymentMode || 'UPI General'}</td>
                       <td className="py-3.5 px-4 text-center">
-                        <button
-                          onClick={() => handleStatusToggle(order.id, payStatus)}
-                          className={`px-3 py-1 rounded-full font-semibold text-[11px] transition-all cursor-pointer ${
-                            payStatus === 'Paid'
-                              ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                              : 'bg-rose-50 text-rose-600 hover:bg-rose-100'
-                          }`}
-                        >
-                          {payStatus === 'Paid' ? '✅ Paid' : '⏳ Pending'}
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleStatusToggle(order.id, payStatus)}
+                            className={`px-3 py-1 rounded-full font-semibold text-[11px] transition-all cursor-pointer ${
+                              payStatus === 'Paid'
+                                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                : 'bg-rose-50 text-rose-600 hover:bg-rose-100'
+                            }`}
+                          >
+                            {payStatus === 'Paid' ? '✅ Paid' : '⏳ Pending'}
+                          </button>
+
+                          {payStatus === 'Pending' && customerPhone && (
+                            <a
+                              href={`https://wa.me/91${customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                                `Hello ${order.customerName}, gentle reminder from Udhaya Aquatics regarding your pending payment of ₹${orderTotal} for Order #${order.orderId || order.id.slice(0, 6)}. Please clear it at your earliest. Thank you! 🐟`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] transition-all flex items-center gap-1 cursor-pointer"
+                              title="Send WhatsApp Payment Reminder"
+                            >
+                              <span>💬 Reminder</span>
+                            </a>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
