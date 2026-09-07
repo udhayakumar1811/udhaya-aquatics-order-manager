@@ -171,6 +171,7 @@ export default function WholesaleInvestmentLog() {
                   <option value="DTDC Express">DTDC Express</option>
                   <option value="Bus / Parcel Service">Bus / Parcel Service</option>
                   <option value="Direct Farm Pickup">Direct Farm Pickup</option>
+                  <option value="Direct Shop">Direct Shop</option>
                 </select>
               </div>
 

@@ -73,8 +73,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-50 font-sans">
         <header className="bg-slate-900 text-white px-6 py-4 shadow-md flex justify-between items-center">
-          <div className="font-bold text-lg">Udhaya Aquatics — Public Stock Catalog</div>
-          <a href="/" className="text-xs bg-blue-600 px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700">Admin Login</a>
+          <div className="font-bold text-lg">Udhaya Aquatics — Current Stock List</div>
         </header>
         <main>
           <Suspense fallback={<TabLoading />}>
