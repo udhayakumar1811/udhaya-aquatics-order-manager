@@ -33,6 +33,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
         { id: 'breeding-log', label: '🧬 Breeding Log' },
         { id: 'fish-grading', label: '📏 Fish Size & Grade Grading Log' },
         { id: 'feed-production', label: '🌿 Live Feed Planning' },
+        { id: 'wholesale-investment', label: '📦 Wholesale & Bulk Purchases' },
         { id: 'mortality-tracker', label: '⚠️ Mortality & Loss Tracker' },
         { id: 'farm-checklist', label: '☑️ Farm Checklist' }
       ]
