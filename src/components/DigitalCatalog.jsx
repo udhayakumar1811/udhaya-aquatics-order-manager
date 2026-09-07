@@ -28,12 +28,13 @@ export default function DigitalCatalog() {
 
   // Function to share Web App Catalog Link via WhatsApp
   const handleShareCatalogLink = () => {
-    const currentUrl = window.location.href; // Gets current page link (e.g. your deployed web app URL)
-    const message = `🌟 *Udhaya Aquatics - Live Guppy Stock Catalog* 🌟\n\nCheck out our live available fish varieties, photos, videos, and prices here:\n👉 ${currentUrl}\n\n*Browse and order directly via WhatsApp!* 🐟`;
+    const baseUrl = window.location.origin;
+    const catalogUrl = `${baseUrl}/catalog`;
+    const message = `🌟 *Udhaya Aquatics - Live Guppy Stock Catalog* 🌟\n\nCheck out our live available fish varieties, photos, videos, and prices here:\n👉 ${catalogUrl}\n\n*Browse and order directly via WhatsApp!* 🐟`;
 
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
-    showToast('Catalog web link opened in WhatsApp!', 'success');
+    showToast('Public catalog link opened in WhatsApp!', 'success');
   };
 
   return (
