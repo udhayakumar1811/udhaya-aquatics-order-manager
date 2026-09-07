@@ -23,24 +23,56 @@ export default function DigitalCatalog() {
   }, []);
 
   const filteredItems = inventory.filter(item =>
-    (item.varietyName || item.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (item.varietyName || item.itemName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Function to generate and share complete stock list via WhatsApp
+  const handleShareAllWhatsApp = () => {
+    if (inventory.length === 0) {
+      showToast('No stock items available to share.', 'error');
+      return;
+    }
+
+    let message = `🐟 *Udhaya Aquatics - Live Stock Catalog* 🐟\n\nHere are our currently available strains & items:\n\n`;
+    
+    inventory.forEach((item, index) => {
+      const name = item.itemName || item.varietyName || 'Strain';
+      const price = item.sellingPrice || item.pricePerPair || 0;
+      const qty = item.stockQty ?? item.quantity ?? 0;
+      const unit = item.unit || 'Pairs';
+      
+      message += `${index + 1}. *${name}*\n   💰 Price: ₹${price} / ${unit}\n   📦 Available: ${qty} ${unit}\n\n`;
+    });
+
+    message += `📞 *To Order:* Reply directly to this message or call us at Udhaya Aquatics!`;
+
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    showToast('Opening WhatsApp to share complete catalog!', 'success');
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 text-sm" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">🌐 Digital Guppy Stock Catalog & WhatsApp Linker</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Publish live farm inventory strains with photos, videos, and prices, generating instant "Buy on WhatsApp" links.</p>
+          <p className="text-xs text-gray-500 mt-0.5">Publish live farm inventory strains and share the complete stock list instantly via WhatsApp.</p>
         </div>
-        <div className="w-full md:w-72">
+
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <input
             type="text"
-            placeholder="Search strains (Full Gold, AFR...)"
+            placeholder="Search strains..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full md:w-60 p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <button
+            onClick={handleShareAllWhatsApp}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
+          >
+            <span>📤 Share All Stock (WhatsApp)</span>
+          </button>
         </div>
       </div>
 
@@ -53,50 +85,44 @@ export default function DigitalCatalog() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredItems.map((item) => {
-            const name = item.varietyName || item.name || 'Guppy Strain';
-            const price = item.pricePerPair || item.price || 350;
-            const stockQty = item.quantity || item.pairsCount || 10;
-            const imageUrl = item.imageUrl || item.photoUrl || 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=500&auto=format&fit=crop';
-            const videoUrl = item.videoUrl || item.video || ''; // Support for product video link/embed
+            const name = item.itemName || item.varietyName || 'Guppy Strain';
+            const price = item.sellingPrice || item.pricePerPair || 350;
+            const stockQty = item.stockQty ?? item.quantity ?? 10;
+            const unit = item.unit || 'pair';
+            const imageUrl = item.imageUrl || item.photoUrl || '';
+            const videoUrl = item.videoUrl || '';
 
-            const whatsappMessage = encodeURIComponent(
-              `Hello Udhaya Aquatics! 🐟 I would like to order the following strain from your digital catalog:\n\n*Strain:* ${name}\n*Price:* ₹${price}\n*Available Stock:* ${stockQty} pairs/pcs\n\nPlease confirm availability and shipping to my address.`
+            const singleWhatsappMessage = encodeURIComponent(
+              `Hello Udhaya Aquatics! 🐟 I would like to order:\n\n*Item:* ${name}\n*Price:* ₹${price}\n*Stock:* ${stockQty} ${unit}\n\nPlease confirm availability.`
             );
-            const whatsappUrl = `https://wa.me/919003278284?text=${whatsappMessage}`;
+            const singleWhatsappUrl = `https://wa.me/919003278284?text=${singleWhatsappMessage}`;
 
             return (
               <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
                 <div>
-                  {/* Media Section: Image or Video */}
-                  <div className="relative h-48 bg-gray-100 overflow-hidden">
-                    {videoUrl ? (
-                      <video
-                        src={videoUrl}
-                        controls
-                        className="w-full h-full object-cover"
-                        poster={imageUrl}
-                      />
-                    ) : (
+                  <div className="relative h-48 bg-gray-100 overflow-hidden flex items-center justify-center">
+                    {imageUrl ? (
                       <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs text-gray-400 font-medium">No Image Uploaded</span>
                     )}
                     <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">
-                      {stockQty > 0 ? `🟢 Stock: ${stockQty}` : '🔴 Out of Stock'}
+                      {stockQty > 0 ? `🟢 Stock: ${stockQty} ${unit}` : '🔴 Out of Stock'}
                     </span>
                   </div>
 
                   <div className="p-5 space-y-2">
                     <h3 className="text-base font-bold text-gray-900">{name}</h3>
                     <div className="flex justify-between items-center">
-                      <span className="text-lg font-extrabold text-emerald-600">₹{price} <span className="text-xs font-normal text-gray-500">/ pair</span></span>
-                      <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-medium">{item.grade || 'Grade A'}</span>
+                      <span className="text-lg font-extrabold text-emerald-600">₹{price} <span className="text-xs font-normal text-gray-500">/ {unit}</span></span>
+                      <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-medium">{item.category || 'Fish Variety'}</span>
                     </div>
-                    <p className="text-xs text-gray-500 line-clamp-2">{item.notes || 'High purity active guppy strain bred in outdoor green water tubs.'}</p>
                   </div>
                 </div>
 
                 <div className="p-5 pt-0">
                   <a
-                    href={whatsappUrl}
+                    href={singleWhatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
