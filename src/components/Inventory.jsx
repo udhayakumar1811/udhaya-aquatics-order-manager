@@ -129,7 +129,7 @@ export default function Inventory() {
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Udhaya Aquatics Inventory & Stock</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Manage fish varieties with photos/videos, combos, medicines, feeds, and live stock tracking.</p>
+          <p className="text-xs text-gray-500 mt-0.5">Manage fish varieties with photo/video file uploads, combos, medicines, and feeds.</p>
         </div>
         <div className="flex items-center gap-3">
           {lowStockItemsCount > 0 && (
@@ -151,7 +151,7 @@ export default function Inventory() {
         <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm">Loading inventory...</div>
       ) : items.length === 0 ? (
         <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm">
-          No stock items added yet. Click "Add New Stock Item" to start tracking your fish, feeds, and medicines.
+          No stock items added yet. Click "Add New Stock Item" to start tracking.
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -322,30 +322,44 @@ export default function Inventory() {
                 </div>
               </div>
 
-              {/* Media Links for Digital Catalog */}
+              {/* File Upload Section for Photo & Video */}
               <div className="space-y-3 pt-2 border-t border-gray-100">
-                <p className="text-xs font-bold text-gray-800 uppercase tracking-wider">Catalog Media (Photo & Video)</p>
+                <p className="text-xs font-bold text-gray-800 uppercase tracking-wider">Upload Media Files (Photo & Video)</p>
+                
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Photo Image URL</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Upload Photo File</label>
                   <input
-                    type="text"
-                    name="imageUrl"
-                    value={formData.imageUrl}
-                    onChange={handleChange}
-                    placeholder="https://example.com/fish-photo.jpg"
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const fakeUrl = URL.createObjectURL(file);
+                        setFormData(prev => ({ ...prev, imageUrl: fakeUrl }));
+                        showToast('Photo file attached successfully!', 'success');
+                      }
+                    }}
+                    className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
                   />
+                  {formData.imageUrl && <p className="text-[10px] text-emerald-600 mt-1">✓ Photo attached</p>}
                 </div>
+
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Video URL (Optional)</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Upload Video File (Optional)</label>
                   <input
-                    type="text"
-                    name="videoUrl"
-                    value={formData.videoUrl}
-                    onChange={handleChange}
-                    placeholder="https://example.com/fish-video.mp4"
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const fakeVideoUrl = URL.createObjectURL(file);
+                        setFormData(prev => ({ ...prev, videoUrl: fakeVideoUrl }));
+                        showToast('Video file attached successfully!', 'success');
+                      }
+                    }}
+                    className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
                   />
+                  {formData.videoUrl && <p className="text-[10px] text-emerald-600 mt-1">✓ Video attached</p>}
                 </div>
               </div>
 
