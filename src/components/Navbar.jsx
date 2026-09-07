@@ -29,6 +29,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
       title: '🐟 Farm & Production',
       items: [
         { id: 'breeding-log', label: 'Breeding Log' },
+        { id: 'fish-grading', label: '🐟 Fish Size & Grade Grading Log' },
         { id: 'feed-production', label: 'Live Feed Planning' },
         { id: 'mortality-tracker', label: 'Mortality & Loss Tracker' },
         { id: 'farm-checklist', label: 'Farm Checklist' }
