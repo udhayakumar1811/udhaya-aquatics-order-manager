@@ -17,7 +17,6 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'customer-ledger', label: '👥 Payment Ledger' }
   ];
 
-  // Categorized Management Tools Groups with Emojis (Wholesale entry removed as it is now inside Expenses)
   const toolCategories = [
     {
       title: '👑 Customer & Marketing',
@@ -72,19 +71,16 @@ export default function Navbar({ activeTab, setActiveTab }) {
   return (
     <nav className="bg-slate-900 text-white px-4 md:px-6 py-4 shadow-md relative z-50">
       <div className="flex items-center justify-between">
-        {/* Brand Logo */}
         <div className="flex items-center space-x-3">
           <div className="bg-blue-600 px-3 py-2 rounded-lg font-bold text-base md:text-lg">Udhaya Aquatics</div>
           <span className="hidden sm:inline text-xs text-slate-400 font-semibold tracking-wider">ORDER MANAGER</span>
         </div>
 
-        {/* Desktop Navigation Links */}
         <div className="hidden lg:flex items-center gap-2">
           {primaryNavItems.map((item) => (
             <button
               key={item.id}
               onClick={() => { setActiveTab(item.id); setToolsDropdownOpen(false); }}
-              aria-current={activeTab === item.id ? 'page' : undefined}
               className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                 activeTab === item.id
                   ? 'bg-blue-600 text-white shadow'
@@ -95,7 +91,6 @@ export default function Navbar({ activeTab, setActiveTab }) {
             </button>
           ))}
 
-          {/* Desktop Management Tools Dropdown */}
           <div className="relative">
             <button
               onClick={() => setToolsDropdownOpen((o) => !o)}
@@ -140,12 +135,9 @@ export default function Navbar({ activeTab, setActiveTab }) {
             )}
           </div>
 
-          {/* Account Menu */}
           <div className="relative ml-1">
             <button
               onClick={() => { setMenuOpen((o) => !o); setToolsDropdownOpen(false); }}
-              aria-label="Account menu"
-              aria-expanded={menuOpen}
               className="w-9 h-9 rounded-full bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold flex items-center justify-center transition-colors cursor-pointer"
               title={user?.email}
             >
@@ -165,7 +157,6 @@ export default function Navbar({ activeTab, setActiveTab }) {
           </div>
         </div>
 
-        {/* Mobile Hamburger Button */}
         <div className="flex items-center gap-2 lg:hidden">
           <button
             onClick={() => { setMenuOpen((o) => !o); setMobileMenuOpen(false); }}
@@ -174,10 +165,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
           >
             {(user?.email || '?').charAt(0).toUpperCase()}
           </button>
-
           <button
             onClick={() => { setMobileMenuOpen((o) => !o); setMenuOpen(false); }}
-            aria-label="Toggle mobile menu"
             className="p-2 rounded-lg bg-slate-800 text-white focus:outline-none"
           >
             <span className="text-xl">{mobileMenuOpen ? '✕' : '☰'}</span>
@@ -185,7 +174,6 @@ export default function Navbar({ activeTab, setActiveTab }) {
         </div>
       </div>
 
-      {/* Account Menu Dropdown for Mobile */}
       {menuOpen && (
         <div className="absolute right-4 top-16 w-56 bg-white text-slate-800 rounded-xl shadow-xl border border-gray-100 py-2 z-50 lg:hidden">
           <p className="px-3 py-1.5 text-xs text-slate-400 truncate">{user?.email}</p>
@@ -198,7 +186,6 @@ export default function Navbar({ activeTab, setActiveTab }) {
         </div>
       )}
 
-      {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden mt-4 pt-4 border-t border-slate-800 space-y-4 max-h-[75vh] overflow-y-auto">
           <div className="space-y-1">
@@ -219,7 +206,6 @@ export default function Navbar({ activeTab, setActiveTab }) {
             ))}
           </div>
 
-          {/* Mobile Management Tools Accordion */}
           <div className="space-y-2 pt-2 border-t border-slate-800">
             <button
               onClick={() => setMobileToolsOpen(!mobileToolsOpen)}

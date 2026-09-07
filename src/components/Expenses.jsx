@@ -12,7 +12,6 @@ export default function Expenses() {
   const [modalType, setModalType] = useState('expense'); // 'expense' or 'wholesale'
   const [editingExpense, setEditingExpense] = useState(null);
 
-  // Normal Expense Form State
   const [expenseForm, setExpenseForm] = useState({
     title: '',
     category: 'Travel / Fuel',
@@ -21,7 +20,6 @@ export default function Expenses() {
     notes: ''
   });
 
-  // Wholesale Form State
   const [wholesaleForm, setWholesaleForm] = useState({
     supplierName: '',
     orderDate: new Date().toISOString().split('T')[0],
@@ -32,7 +30,6 @@ export default function Expenses() {
   });
 
   useEffect(() => {
-    // Fetch normal expenses
     const expQuery = query(collection(db, 'expenses'), orderBy('date', 'desc'));
     const unsubExpenses = onSnapshot(expQuery, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
@@ -43,7 +40,6 @@ export default function Expenses() {
       setExpenses(data);
     });
 
-    // Fetch wholesale investments
     const wholesaleQuery = query(collection(db, 'wholesaleInvestments'), orderBy('orderDate', 'desc'));
     const unsubWholesale = onSnapshot(wholesaleQuery, (snapshot) => {
       const data = snapshot.docs.map(doc => {
@@ -55,10 +51,6 @@ export default function Expenses() {
           title: `Wholesale: ${item.supplierName} (${item.items?.length || 0} items)`,
           category: 'Stock Purchase (Wholesale)',
           amount: item.totalCost || 0,
-          courierName: item.courierName,
-          courierCharge: item.courierCharge,
-          supplierName: item.supplierName,
-          items: item.items,
           notes: `Courier: ${item.courierName} (₹${item.courierCharge || 0}) | ${item.notes || ''}`
         };
       });
@@ -72,7 +64,6 @@ export default function Expenses() {
     };
   }, []);
 
-  // Expense Form Handlers
   const handleExpenseChange = (e) => {
     const { name, value } = e.target;
     setExpenseForm(prev => ({ ...prev, [name]: value }));
@@ -129,7 +120,6 @@ export default function Expenses() {
     }
   };
 
-  // Wholesale Form Handlers
   const handleOpenAddWholesale = () => {
     setWholesaleForm({
       supplierName: '',
@@ -220,7 +210,6 @@ export default function Expenses() {
     }
   };
 
-  // Combine both records
   const allCombinedRecords = [...expenses, ...wholesaleOrders].sort((a, b) => new Date(b.date) - new Date(a.date));
   const totalCombinedExpenses = allCombinedRecords.reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
@@ -311,11 +300,9 @@ export default function Expenses() {
         </div>
       )}
 
-      {/* Modal for Adding/Editing Expenses or Wholesale */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
           <div className="bg-white rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto space-y-4" onClick={(e) => e.stopPropagation()}>
-            
             {modalType === 'expense' ? (
               <>
                 <h2 className="text-lg font-bold text-gray-900">{editingExpense ? 'Edit Business Expense' : 'Add Business Expense'}</h2>
@@ -522,7 +509,6 @@ export default function Expenses() {
                 </form>
               </>
             )}
-
           </div>
         </div>
       )}
