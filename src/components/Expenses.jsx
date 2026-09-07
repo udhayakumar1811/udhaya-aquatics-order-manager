@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext';
 export default function Expenses() {
   const { showToast } = useToast();
   const [expenses, setExpenses] = useState([]);
+  const [wholesaleOrders, setWholesaleOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
@@ -19,16 +20,40 @@ export default function Expenses() {
   });
 
   useEffect(() => {
-    const q = query(collection(db, 'expenses'), orderBy('date', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    // Fetch normal expenses
+    const expQuery = query(collection(db, 'expenses'), orderBy('date', 'desc'));
+    const unsubExpenses = onSnapshot(expQuery, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
+        type: 'expense',
         ...doc.data()
       }));
       setExpenses(data);
+    });
+
+    // Fetch wholesale investments to include in total expenses / investments
+    const wholesaleQuery = query(collection(db, 'wholesaleInvestments'), orderBy('orderDate', 'desc'));
+    const unsubWholesale = onSnapshot(wholesaleQuery, (snapshot) => {
+      const data = snapshot.docs.map(doc => {
+        const item = doc.data();
+        return {
+          id: doc.id,
+          type: 'wholesale',
+          date: item.orderDate || '',
+          title: `Wholesale: ${item.supplierName} (${item.items?.length || 0} items)`,
+          category: 'Stock Purchase (Wholesale)',
+          amount: item.totalCost || 0,
+          notes: `Courier: ${item.courierName} (₹${item.courierCharge || 0}) | ${item.notes || ''}`
+        };
+      });
+      setWholesaleOrders(data);
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubExpenses();
+      unsubWholesale();
+    };
   }, []);
 
   const handleChange = (e) => {
@@ -105,18 +130,20 @@ export default function Expenses() {
     }
   };
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
+  // Combine both normal expenses and wholesale bulk investments for comprehensive P&L/Expense tracking
+  const allCombinedRecords = [...expenses, ...wholesaleOrders].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const totalCombinedExpenses = allCombinedRecords.reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 text-sm" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 text-xs md:text-sm" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Business Expenses & Travel Investments</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Track petrol/travel costs, courier charges, stock purchases, and farm maintenance.</p>
+          <h1 className="text-lg md:text-xl font-bold text-gray-900">Business Expenses & Wholesale Investments</h1>
+          <p className="text-xs text-gray-500 mt-0.5">Track petrol, travel, farm maintenance, and bulk wholesale stock procurement together.</p>
         </div>
         <button
           onClick={handleOpenAdd}
-          className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2"
+          className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer"
         >
           <span>💸 Add New Expense</span>
         </button>
@@ -124,20 +151,20 @@ export default function Expenses() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">TOTAL BUSINESS EXPENSES & INVESTMENTS</p>
-          <h3 className="text-3xl font-extrabold text-rose-600 mt-2">₹{totalExpenses.toLocaleString()}</h3>
+          <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">TOTAL EXPENSES & WHOLESALE INVESTMENTS</p>
+          <h3 className="text-3xl font-extrabold text-rose-600 mt-2">₹{totalCombinedExpenses.toLocaleString()}</h3>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">TOTAL RECORDS</p>
-          <h3 className="text-3xl font-extrabold text-gray-800 mt-2">{expenses.length} Entries</h3>
+          <h3 className="text-3xl font-extrabold text-gray-800 mt-2">{allCombinedRecords.length} Entries</h3>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm">Loading expenses...</div>
-      ) : expenses.length === 0 ? (
+        <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm">Loading records...</div>
+      ) : allCombinedRecords.length === 0 ? (
         <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm">
-          No expenses recorded yet. Click "Add New Expense" to track petrol, travel, and stock purchase costs.
+          No records found. Click "Add New Expense" to track costs.
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -154,22 +181,31 @@ export default function Expenses() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-700">
-                {expenses.map((exp) => (
-                  <tr key={exp.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="py-3.5 px-4 text-gray-500">{exp.date}</td>
-                    <td className="py-3.5 px-4 font-semibold text-gray-900">{exp.title}</td>
+                {allCombinedRecords.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-3.5 px-4 text-gray-500">{item.date || '—'}</td>
+                    <td className="py-3.5 px-4 font-semibold text-gray-900">
+                      {item.title}
+                      {item.type === 'wholesale' && (
+                        <span className="ml-2 bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-100">Wholesale</span>
+                      )}
+                    </td>
                     <td className="py-3.5 px-4">
                       <span className="bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-lg">
-                        {exp.category}
+                        {item.category}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-gray-500 truncate max-w-xs">{exp.notes || '—'}</td>
-                    <td className="py-3.5 px-4 font-bold text-rose-600">₹{exp.amount}</td>
+                    <td className="py-3.5 px-4 text-gray-500 truncate max-w-xs">{item.notes || '—'}</td>
+                    <td className="py-3.5 px-4 font-bold text-rose-600">₹{Number(item.amount || 0).toLocaleString()}</td>
                     <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button onClick={() => handleOpenEdit(exp)} className="px-2.5 py-1 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg font-medium">Edit</button>
-                        <button onClick={() => handleDelete(exp.id)} className="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg font-medium">Delete</button>
-                      </div>
+                      {item.type === 'wholesale' ? (
+                        <span className="text-[11px] text-gray-400 italic">Managed in Wholesale Tab</span>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button onClick={() => handleOpenEdit(item)} className="px-2.5 py-1 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg font-medium cursor-pointer">Edit</button>
+                          <button onClick={() => handleDelete(item.id)} className="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg font-medium cursor-pointer">Delete</button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -193,7 +229,7 @@ export default function Expenses() {
                   required
                   value={formData.title}
                   onChange={handleChange}
-                  placeholder="e.g. Petrol for Shop Visit, Courier Charge for Fish"
+                  placeholder="e.g. Petrol for Shop Visit, Farm Maintenance"
                   className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -258,13 +294,13 @@ export default function Expenses() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-sm"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-sm cursor-pointer"
                 >
                   {editingExpense ? 'Update Expense' : 'Save Expense'}
                 </button>
