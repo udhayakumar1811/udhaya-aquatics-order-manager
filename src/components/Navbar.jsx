@@ -41,6 +41,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
         { id: 'expense-analytics', label: 'Expense Analytics' },
         { id: 'variety-analytics', label: 'Variety Sales Analytics' },
         { id: 'reports-analytics', label: 'Reports & P&L' },
+        { id: 'profit-loss-report', label: '📈 Monthly P&L Statement' },
         { id: 'customer-history', label: 'Customer History' }
       ]
     },
