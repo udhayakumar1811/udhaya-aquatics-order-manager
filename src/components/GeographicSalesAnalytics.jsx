@@ -27,10 +27,13 @@ export default function GeographicSalesAnalytics() {
     fetchOrders();
   }, []);
 
-  // Helper to categorize state
+  // Helper to categorize state (Puducherry grouped under Tamil Nadu as requested)
   const getStateCategory = (stateName = '', pin = '') => {
     const s = stateName.trim().toLowerCase();
-    if (s.includes('tamil') || s.includes('tn') || s.includes('rajapalayam')) {
+    if (
+      s.includes('tamil') || s.includes('tn') || s.includes('rajapalayam') || 
+      s.includes('puducherry') || s.includes('pondicherry') || s.includes('பாண்டிச்சேரி') || s.includes('புதுச்சேரி')
+    ) {
       return 'TAMIL_NADU';
     } else if (
       s.includes('kerala') || s.includes('karnataka') || 
@@ -44,7 +47,7 @@ export default function GeographicSalesAnalytics() {
 
   // Group orders by Region -> State -> District/City
   const groupedData = {
-    TAMIL_NADU: { title: '1. Tamil Nadu (தமிழ்நாடு)', states: {} },
+    TAMIL_NADU: { title: '1. Tamil Nadu & Puducherry (தமிழ்நாடு & புதுச்சேரி)', states: {} },
     SOUTH_OTHER: { title: '2. South India States (கேரளா, கர்நாடகா, ஆந்திரா, தெலங்கானா)', states: {} },
     NORTH_INDIA: { title: '3. Rest of India / North India (வட மற்றும் பிற மாநிலங்கள்)', states: {} }
   };
@@ -92,7 +95,7 @@ export default function GeographicSalesAnalytics() {
                 selectedCategory === cat ? 'bg-blue-600 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              {cat === 'ALL' ? 'All Regions' : cat === 'TAMIL_NADU' ? 'Tamil Nadu' : cat === 'SOUTH_OTHER' ? 'South States' : 'North India'}
+              {cat === 'ALL' ? 'All Regions' : cat === 'TAMIL_NADU' ? 'Tamil Nadu & Pondy' : cat === 'SOUTH_OTHER' ? 'South States' : 'North India'}
             </button>
           ))}
         </div>
