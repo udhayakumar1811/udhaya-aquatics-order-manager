@@ -256,7 +256,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
                 <th className="py-3 px-4">ORDER ID & DATE</th>
                 <th className="py-3 px-4">CUSTOMER & PIN</th>
                 <th className="py-3 px-4">ITEMS</th>
-                <th className="py-3 px-4">TRACKING & LIVE TRACK</th>
+                <th className="py-3 px-4">TRACKING & PROFESSIONAL TRACK</th>
                 <th className="py-3 px-4">PACKING PHOTO</th>
                 <th className="py-3 px-4">REVENUE / PROFIT</th>
                 <th className="py-3 px-4">STATUS</th>
@@ -312,10 +312,10 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
                           />
                           {order.trackingId && (
                             <a
-                              href={`https://www.dtdc.in/tracking/shipment-tracking.asp?trackingno=${order.trackingId}`}
+                              href={`https://www.theprofessionalcouriers.com/`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              title="Live Track on Courier Website"
+                              title="Track on The Professional Couriers Website"
                               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2 py-1 rounded text-[10px] transition-all flex items-center gap-0.5 whitespace-nowrap cursor-pointer"
                             >
                               <span>🌐 Track</span>
@@ -483,7 +483,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
                   type="text"
                   value={bulkTrackingId}
                   onChange={(e) => setBulkTrackingId(e.target.value)}
-                  placeholder="e.g. DTDC-BATCH-SEP07 or leave blank"
+                  placeholder="e.g. TRC-BATCH-01 or leave blank"
                   className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
