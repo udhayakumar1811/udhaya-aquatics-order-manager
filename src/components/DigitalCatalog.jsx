@@ -26,29 +26,14 @@ export default function DigitalCatalog() {
     (item.varietyName || item.itemName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Function to generate and share complete stock list via WhatsApp
-  const handleShareAllWhatsApp = () => {
-    if (inventory.length === 0) {
-      showToast('No stock items available to share.', 'error');
-      return;
-    }
-
-    let message = `🐟 *Udhaya Aquatics - Live Stock Catalog* 🐟\n\nHere are our currently available strains & items:\n\n`;
-    
-    inventory.forEach((item, index) => {
-      const name = item.itemName || item.varietyName || 'Strain';
-      const price = item.sellingPrice || item.pricePerPair || 0;
-      const qty = item.stockQty ?? item.quantity ?? 0;
-      const unit = item.unit || 'Pairs';
-      
-      message += `${index + 1}. *${name}*\n   💰 Price: ₹${price} / ${unit}\n   📦 Available: ${qty} ${unit}\n\n`;
-    });
-
-    message += `📞 *To Order:* Reply directly to this message or call us at Udhaya Aquatics!`;
+  // Function to share Web App Catalog Link via WhatsApp
+  const handleShareCatalogLink = () => {
+    const currentUrl = window.location.href; // Gets current page link (e.g. your deployed web app URL)
+    const message = `🌟 *Udhaya Aquatics - Live Guppy Stock Catalog* 🌟\n\nCheck out our live available fish varieties, photos, videos, and prices here:\n👉 ${currentUrl}\n\n*Browse and order directly via WhatsApp!* 🐟`;
 
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
-    showToast('Opening WhatsApp to share complete catalog!', 'success');
+    showToast('Catalog web link opened in WhatsApp!', 'success');
   };
 
   return (
@@ -56,7 +41,7 @@ export default function DigitalCatalog() {
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">🌐 Digital Guppy Stock Catalog & WhatsApp Linker</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Publish live farm inventory strains and share the complete stock list instantly via WhatsApp.</p>
+          <p className="text-xs text-gray-500 mt-0.5">Share your live catalog web link so customers can view photos, videos & buy on WhatsApp.</p>
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -68,10 +53,10 @@ export default function DigitalCatalog() {
             className="w-full md:w-60 p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
-            onClick={handleShareAllWhatsApp}
+            onClick={handleShareCatalogLink}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
           >
-            <span>📤 Share All Stock (WhatsApp)</span>
+            <span>🔗 Share Catalog Link (WhatsApp)</span>
           </button>
         </div>
       </div>
@@ -93,7 +78,7 @@ export default function DigitalCatalog() {
             const videoUrl = item.videoUrl || '';
 
             const singleWhatsappMessage = encodeURIComponent(
-              `Hello Udhaya Aquatics! 🐟 I would like to order:\n\n*Item:* ${name}\n*Price:* ₹${price}\n*Stock:* ${stockQty} ${unit}\n\nPlease confirm availability.`
+              `Hello Udhaya Aquatics! 🐟 I saw this on your digital catalog:\n\n*Item:* ${name}\n*Price:* ₹${price}\n*Stock:* ${stockQty} ${unit}\n\nI would like to order this. Please confirm availability.`
             );
             const singleWhatsappUrl = `https://wa.me/919003278284?text=${singleWhatsappMessage}`;
 
