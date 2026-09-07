@@ -256,7 +256,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
                 <th className="py-3 px-4">ORDER ID & DATE</th>
                 <th className="py-3 px-4">CUSTOMER & PIN</th>
                 <th className="py-3 px-4">ITEMS</th>
-                <th className="py-3 px-4">TRACKING & PROFESSIONAL TRACK</th>
+                <th className="py-3 px-4">TRACKING & TPC TRACK</th>
                 <th className="py-3 px-4">PACKING PHOTO</th>
                 <th className="py-3 px-4">REVENUE / PROFIT</th>
                 <th className="py-3 px-4">STATUS</th>
@@ -312,10 +312,10 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
                           />
                           {order.trackingId && (
                             <a
-                              href={`https://www.theprofessionalcouriers.com/`}
+                              href="https://www.tpcindia.com/"
                               target="_blank"
                               rel="noopener noreferrer"
-                              title="Track on The Professional Couriers Website"
+                              title="Track on The Professional Couriers (TPC India)"
                               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2 py-1 rounded text-[10px] transition-all flex items-center gap-0.5 whitespace-nowrap cursor-pointer"
                             >
                               <span>🌐 Track</span>
