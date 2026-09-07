@@ -206,7 +206,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-lg font-bold text-gray-800">Orders List ({filteredOrders.length})</h1>
-          <p className="text-[11px] text-gray-500 mt-0.5">Manage statuses, tracking IDs, packing photos, AI OCR slip scanner, and bulk updates.</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">Manage statuses, tracking IDs, packing photos, AI OCR slip scanner, WhatsApp notify, and bulk updates.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
@@ -252,7 +252,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
                 <th className="py-2.5 px-3 whitespace-nowrap">ORDER & DATE</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">CUSTOMER & PIN</th>
                 <th className="py-2.5 px-3">ITEMS</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">TRACKING & TPC</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">TRACKING & WHATSAPP</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">PHOTO</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">REV / PROFIT</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">STATUS</th>
@@ -270,6 +270,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
                 filteredOrders.map((order) => {
                   const currentStatus = order.status || order.orderStatus || 'Pending';
                   const isSelected = selectedOrderIds.includes(order.id);
+                  const customerPhone = order.phone || order.mobileNumber || '';
                   return (
                     <tr key={order.id} className={`transition-colors ${isSelected ? 'bg-blue-50/40' : 'hover:bg-gray-50/50'}`}>
                       <td className="py-3 px-3 text-center">
@@ -288,7 +289,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
 
                       <td className="py-3 px-3 whitespace-nowrap">
                         <div className="font-medium text-gray-900">{order.customerName}</div>
-                        <div className="text-[10px] text-gray-400">{order.phone || order.mobileNumber}</div>
+                        <div className="text-[10px] text-gray-400">{customerPhone}</div>
                         <div className="text-[10px] text-blue-600 font-medium">{order.city} ({order.pincode})</div>
                       </td>
 
@@ -296,7 +297,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
                         {order.itemsSummary || (order.items && order.items[0]?.varietyName) || '—'}
                       </td>
 
-                      <td className="py-3 px-3 space-y-1 whitespace-nowrap">
+                      <td className="py-3 px-3 space-y-1.5 whitespace-nowrap">
                         <div className="flex items-center gap-1">
                           <input
                             type="text"
@@ -309,23 +310,38 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
                             <button
                               onClick={() => {
                                 navigator.clipboard.writeText(order.trackingId);
-                                showToast(`Copied!`, 'success');
+                                showToast(`Tracking ID copied!`, 'success');
                                 window.open('https://www.tpcindia.com/', '_blank');
                               }}
                               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-1.5 py-1 rounded text-[10px] transition-all cursor-pointer"
-                              title="Copy & Track"
+                              title="Copy ID & Track on TPC"
                             >
-                              🌐
+                              🌐 Track
                             </button>
                           )}
                         </div>
-                        <div>
+
+                        <div className="flex items-center gap-1">
                           <button
                             onClick={() => setScanModalOrder(order)}
                             className="text-[10px] bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold px-1.5 py-0.5 rounded border border-purple-100 cursor-pointer"
                           >
-                            🔍 Scan
+                            🔍 Scan Slip
                           </button>
+
+                          {customerPhone && (
+                            <a
+                              href={`https://wa.me/91${customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                                `Hello ${order.customerName || 'Customer'}, thank you for ordering from Udhaya Aquatics! 🐟 Your order #${order.orderId || order.id.slice(0, 6)} has been shipped via The Professional Couriers (TPC India). Tracking ID: ${order.trackingId || 'N/A'}. Track your parcel here: https://www.tpcindia.com/`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold px-1.5 py-0.5 rounded border border-emerald-200 cursor-pointer flex items-center gap-0.5"
+                              title="Send WhatsApp Shipping Update"
+                            >
+                              <span>💬 WhatsApp</span>
+                            </a>
+                          )}
                         </div>
                       </td>
 
