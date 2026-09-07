@@ -8,7 +8,6 @@ import Login from './components/Login';
 import { useAuth } from './context/AuthContext';
 
 const DigitalCatalog = lazy(() => import('./components/DigitalCatalog'));
-const WholesaleInvestmentLog = lazy(() => import('./components/WholesaleInvestmentLog'));
 const RecycleBin = lazy(() => import('./components/RecycleBin'));
 const GeographicSalesAnalytics = lazy(() => import('./components/GeographicSalesAnalytics'));
 const FishGradingLog = lazy(() => import('./components/FishGradingLog'));
@@ -48,7 +47,6 @@ export default function App() {
   const [viewingOrder, setViewingOrder] = useState(null);
   const [stickerOrder, setStickerOrder] = useState(null);
 
-  // Check if URL contains /catalog for public view
   useEffect(() => {
     const checkRoute = () => {
       if (window.location.pathname.includes('/catalog') || window.location.hash.includes('/catalog')) {
@@ -68,7 +66,6 @@ export default function App() {
     );
   }
 
-  // If URL explicitly points to public catalog, bypass login and render ONLY Digital Catalog
   if (isPublicCatalogRoute) {
     return (
       <div className="min-h-screen bg-slate-50 font-sans">
@@ -106,7 +103,6 @@ export default function App() {
           {activeTab === 'inventory' && <Inventory />}
           {activeTab === 'digital-catalog' && <DigitalCatalog />}
           {activeTab === 'expenses' && <Expenses />}
-          {activeTab === 'wholesale-investment' && <WholesaleInvestmentLog />}
           {activeTab === 'expense-analytics' && <ExpenseCategoriesBreakdown />}
           {activeTab === 'customer-ledger' && <CustomerLedger />}
           {activeTab === 'customer-history' && <CustomerHistory />}
@@ -117,7 +113,7 @@ export default function App() {
           {activeTab === 'mortality-tracker' && <MortalityTracker />}
           {activeTab === 'channel-sales' && <ChannelSalesTracker />}
           {activeTab === 'courier-calculator' && <CourierCalculator />}
-          {activeTab === 'profit-loss-report' . report && <ProfitLossReport />}
+          {activeTab === 'profit-loss-report' && <ProfitLossReport />}
           {activeTab === 'fish-grading' && <FishGradingLog />}
           {activeTab === 'geo-analytics' && <GeographicSalesAnalytics />}
           {activeTab === 'recycle-bin' && <RecycleBin />}
