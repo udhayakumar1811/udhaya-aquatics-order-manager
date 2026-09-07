@@ -43,6 +43,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
         { id: 'variety-analytics', label: 'Variety Sales Analytics' },
         { id: 'reports-analytics', label: 'Reports & P&L' },
         { id: 'profit-loss-report', label: '📈 Monthly P&L Statement' },
+        { id: 'geo-analytics', label: '🗺️ Geographic Sales & Districts' },
         { id: 'customer-history', label: 'Customer History' }
       ]
     },
