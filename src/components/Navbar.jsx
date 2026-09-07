@@ -9,52 +9,52 @@ export default function Navbar({ activeTab, setActiveTab }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const primaryNavItems = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'new-order', label: 'New Order' },
-    { id: 'orders-list', label: 'Orders List' },
+    { id: 'dashboard', label: '📊 Dashboard' },
+    { id: 'new-order', label: '➕ New Order' },
+    { id: 'orders-list', label: '📋 Orders List' },
     { id: 'inventory', label: '📦 Stock' },
     { id: 'expenses', label: '💸 Expenses' },
     { id: 'customer-ledger', label: '👥 Payment Ledger' }
   ];
 
-  // Categorized Management Tools Groups
+  // Categorized Management Tools Groups with Emojis
   const toolCategories = [
     {
       title: '👑 Customer & Marketing',
       items: [
-        { id: 'customer-crm', label: 'Customer CRM' },
-        { id: 'whatsapp-marketing', label: 'WhatsApp Broadcast' },
-        { id: 'whatsapp-api-settings', label: 'WhatsApp Cloud API' }
+        { id: 'customer-crm', label: '👑 Customer CRM' },
+        { id: 'whatsapp-marketing', label: '📢 WhatsApp Broadcast' },
+        { id: 'whatsapp-api-settings', label: '⚙️ WhatsApp Cloud API' }
       ]
     },
     {
       title: '🐟 Farm & Production',
       items: [
-        { id: 'breeding-log', label: 'Breeding Log' },
-        { id: 'fish-grading', label: '🐟 Fish Size & Grade Grading Log' },
-        { id: 'feed-production', label: 'Live Feed Planning' },
-        { id: 'mortality-tracker', label: 'Mortality & Loss Tracker' },
-        { id: 'farm-checklist', label: 'Farm Checklist' }
+        { id: 'breeding-log', label: '🧬 Breeding Log' },
+        { id: 'fish-grading', label: '📏 Fish Size & Grade Grading Log' },
+        { id: 'feed-production', label: '🌿 Live Feed Planning' },
+        { id: 'mortality-tracker', label: '⚠️ Mortality & Loss Tracker' },
+        { id: 'farm-checklist', label: '☑️ Farm Checklist' }
       ]
     },
     {
       title: '📊 Analytics & Reports',
       items: [
-        { id: 'channel-sales', label: 'Sales Channels (YouTube/Insta)' },
-        { id: 'expense-analytics', label: 'Expense Analytics' },
-        { id: 'variety-analytics', label: 'Variety Sales Analytics' },
-        { id: 'reports-analytics', label: 'Reports & P&L' },
+        { id: 'channel-sales', label: '📺 Sales Channels (YouTube/Insta)' },
+        { id: 'expense-analytics', label: '📉 Expense Analytics' },
+        { id: 'variety-analytics', label: '📊 Variety Sales Analytics' },
+        { id: 'reports-analytics', label: '📑 Reports & P&L' },
         { id: 'profit-loss-report', label: '📈 Monthly P&L Statement' },
         { id: 'geo-analytics', label: '🗺️ Geographic Sales & Districts' },
-        { id: 'customer-history', label: 'Customer History' }
+        { id: 'customer-history', label: '📜 Customer History' }
       ]
     },
     {
       title: '⚙️ Utilities & Tools',
       items: [
-        { id: 'courier-calculator', label: 'Courier & Pincode Calculator' },
-        { id: 'products-combos', label: 'Products & Combos' },
-        { id: 'backup', label: 'Data Backup' }
+        { id: 'courier-calculator', label: '📦 Courier & Pincode Calculator' },
+        { id: 'products-combos', label: '🛍️ Products & Combos' },
+        { id: 'backup', label: '💾 Data Backup' }
       ]
     }
   ];
@@ -183,7 +183,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
         </div>
       </div>
 
-      {/* Account Menu Dropdown for Mobile (Top right user icon) */}
+      {/* Account Menu Dropdown for Mobile */}
       {menuOpen && (
         <div className="absolute right-4 top-16 w-56 bg-white text-slate-800 rounded-xl shadow-xl border border-gray-100 py-2 z-50 lg:hidden">
           <p className="px-3 py-1.5 text-xs text-slate-400 truncate">{user?.email}</p>
@@ -196,7 +196,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
         </div>
       )}
 
-      {/* Mobile Navigation Drawer / Menu */}
+      {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden mt-4 pt-4 border-t border-slate-800 space-y-4 max-h-[75vh] overflow-y-auto">
           <div className="space-y-1">
