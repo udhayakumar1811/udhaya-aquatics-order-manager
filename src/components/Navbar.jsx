@@ -17,7 +17,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'customer-ledger', label: '👥 Payment Ledger' }
   ];
 
-  // Categorized Management Tools Groups with Emojis
+  // Categorized Management Tools Groups with Emojis (Wholesale entry removed as it is now inside Expenses)
   const toolCategories = [
     {
       title: '👑 Customer & Marketing',
@@ -34,7 +34,6 @@ export default function Navbar({ activeTab, setActiveTab }) {
         { id: 'breeding-log', label: '🧬 Breeding Log' },
         { id: 'fish-grading', label: '📏 Fish Size & Grade Grading Log' },
         { id: 'feed-production', label: '🌿 Live Feed Planning' },
-        { id: 'wholesale-investment', label: '📦 Wholesale & Bulk Purchases' },
         { id: 'mortality-tracker', label: '⚠️ Mortality & Loss Tracker' },
         { id: 'farm-checklist', label: '☑️ Farm Checklist' }
       ]
