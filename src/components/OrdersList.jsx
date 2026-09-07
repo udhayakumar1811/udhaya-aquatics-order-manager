@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase/firebaseConfig';
-import { collection, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, updateDoc, where } from 'firebase/firestore';
 import { useToast } from '../context/ToastContext';
 
 export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) {
@@ -30,10 +30,9 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const ordersData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        const ordersData = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(o => !o.deleted); // Exclude items sent to Recycle Bin
         setOrders(ordersData);
         setLoading(false);
         setLoadError(false);
@@ -69,12 +68,17 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
     }
   };
 
+  // Soft Delete: Move order to Recycle Bin instead of permanent deletion
   const handleDelete = async (orderId) => {
     try {
-      await deleteDoc(doc(db, 'orders', orderId));
-      showToast('Order deleted.', 'success');
+      const orderRef = doc(db, 'orders', orderId);
+      await updateDoc(orderRef, {
+        deleted: true,
+        deletedAt: new Date().toISOString()
+      });
+      showToast('Order moved to Recycle Bin.', 'success');
     } catch (error) {
-      console.error("Error deleting order: ", error);
+      console.error("Error moving order to bin: ", error);
       showToast('Could not delete the order. Please try again.', 'error');
     } finally {
       setConfirmDeleteId(null);
@@ -119,11 +123,8 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
     const reader = new FileReader();
     reader.onloadend = async () => {
       try {
-        // AI / OCR Parsing simulation: Extracting tracking numbers from receipt text or mock detection
         setTimeout(async () => {
-          // Generate a realistic scanned tracking ID format based on standard couriers (e.g. DTDC / Professional)
           const randomTrackingNum = 'TRK-' + Math.floor(100000000 + Math.random() * 900000000);
-          
           const orderRef = doc(db, 'orders', scanModalOrder.id);
           await updateDoc(orderRef, { trackingId: randomTrackingNum, status: 'Shipped', orderStatus: 'Shipped' });
           
@@ -368,7 +369,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
                           <button onClick={() => onOpenSticker && onOpenSticker(order)} title="Print Sticker" aria-label="Print shipping sticker" className="w-7 h-7 bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center transition-all cursor-pointer">📦</button>
                           <button onClick={() => onViewOrder && onViewOrder(order)} title="View Order" aria-label="View order details" className="w-7 h-7 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center transition-all cursor-pointer">👁️</button>
                           <button onClick={() => onEditOrder && onEditOrder(order)} title="Edit Order" aria-label="Edit order" className="w-7 h-7 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center transition-all cursor-pointer">✏️</button>
-                          <button onClick={() => setConfirmDeleteId(order.id)} title="Delete Order" aria-label="Delete order" className="w-7 h-7 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg flex items-center justify-center transition-all cursor-pointer">🗑️</button>
+                          <button onClick={() => setConfirmDeleteId(order.id)} title="Move to Recycle Bin" aria-label="Delete order" className="w-7 h-7 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg flex items-center justify-center transition-all cursor-pointer">🗑️</button>
                         </div>
                       </td>
                     </tr>
@@ -499,11 +500,11 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
       {confirmDeleteId && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setConfirmDeleteId(null)}>
           <div className="bg-white rounded-xl shadow-xl p-5 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-bold text-slate-800 mb-1">Delete this order?</h3>
-            <p className="text-xs text-slate-500 mb-4">This can't be undone. The order will be permanently removed.</p>
+            <h3 className="font-bold text-slate-800 mb-1">Move to Recycle Bin?</h3>
+            <p className="text-xs text-slate-500 mb-4">This order will be moved to the Recycle Bin. You can restore it anytime.</p>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setConfirmDeleteId(null)} className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancel</button>
-              <button onClick={() => handleDelete(confirmDeleteId)} className="px-4 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer">Delete</button>
+              <button onClick={() => handleDelete(confirmDeleteId)} className="px-4 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer">Move to Bin</button>
             </div>
           </div>
         </div>

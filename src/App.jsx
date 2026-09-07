@@ -7,6 +7,7 @@ import ShippingSticker from './components/ShippingSticker';
 import Login from './components/Login';
 import { useAuth } from './context/AuthContext';
 
+const RecycleBin = lazy(() => import('./components/RecycleBin'));
 const GeographicSalesAnalytics = lazy(() => import('./components/GeographicSalesAnalytics'));
 const FishGradingLog = lazy(() => import('./components/FishGradingLog'));
 const ProfitLossReport = lazy(() => import('./components/ProfitLossReport'));
@@ -86,6 +87,7 @@ export default function App() {
           {activeTab === 'profit-loss-report' && <ProfitLossReport />}
           {activeTab === 'fish-grading' && <FishGradingLog />}
           {activeTab === 'geo-analytics' && <GeographicSalesAnalytics />}
+          {activeTab === 'recycle-bin' && <RecycleBin />}
           {activeTab === 'products-combos' && <ProductsCombos />}
           {activeTab === 'reports-analytics' && <ReportsAnalytics />}
           {activeTab === 'backup' && <DataBackup />}

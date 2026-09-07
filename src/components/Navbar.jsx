@@ -54,6 +54,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
       items: [
         { id: 'courier-calculator', label: '📦 Courier & Pincode Calculator' },
         { id: 'products-combos', label: '🛍️ Products & Combos' },
+        { id: 'recycle-bin', label: '🗑️ Recycle Bin (Trash)' },
         { id: 'backup', label: '💾 Data Backup' }
       ]
     }
