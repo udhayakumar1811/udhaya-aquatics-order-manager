@@ -256,7 +256,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
                 <th className="py-3 px-4">ORDER ID & DATE</th>
                 <th className="py-3 px-4">CUSTOMER & PIN</th>
                 <th className="py-3 px-4">ITEMS</th>
-                <th className="py-3 px-4">TRACKING & SLIP SCAN</th>
+                <th className="py-3 px-4">TRACKING & LIVE TRACK</th>
                 <th className="py-3 px-4">PACKING PHOTO</th>
                 <th className="py-3 px-4">REVENUE / PROFIT</th>
                 <th className="py-3 px-4">STATUS</th>
@@ -301,14 +301,27 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
                       </td>
 
                       <td className="py-3.5 px-4 space-y-1.5">
-                        <input
-                          type="text"
-                          defaultValue={order.trackingId || ''}
-                          onBlur={(e) => handleTrackingIdChange(order.id, e.target.value)}
-                          placeholder="Add Tracking ID"
-                          className="border border-gray-200 rounded px-2 py-1 text-[11px] bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 w-28 font-medium"
-                          title="Click outside to save"
-                        />
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            defaultValue={order.trackingId || ''}
+                            onBlur={(e) => handleTrackingIdChange(order.id, e.target.value)}
+                            placeholder="Add Tracking ID"
+                            className="border border-gray-200 rounded px-2 py-1 text-[11px] bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 w-28 font-medium"
+                            title="Click outside to save"
+                          />
+                          {order.trackingId && (
+                            <a
+                              href={`https://www.dtdc.in/tracking/shipment-tracking.asp?trackingno=${order.trackingId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Live Track on Courier Website"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2 py-1 rounded text-[10px] transition-all flex items-center gap-0.5 whitespace-nowrap cursor-pointer"
+                            >
+                              <span>🌐 Track</span>
+                            </a>
+                          )}
+                        </div>
                         <div>
                           <button
                             onClick={() => setScanModalOrder(order)}
