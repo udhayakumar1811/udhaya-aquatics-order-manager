@@ -6,6 +6,7 @@ export default function Dashboard({ setActiveTab }) {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [checkPincode, setCheckPincode] = useState('');
 
   useEffect(() => {
     const qOrders = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
@@ -40,6 +41,16 @@ export default function Dashboard({ setActiveTab }) {
   const totalInvestment = products.reduce((sum, p) => sum + (Number(p.costPrice || 0) * Number(p.qty || 0)), 0);
   const totalCourierCharges = orders.reduce((sum, o) => sum + Number(o.actualCourier || 0), 0);
 
+  const handleTpcCheck = (e) => {
+    e.preventDefault();
+    if (!checkPincode.trim()) {
+      alert('Please enter a valid Pincode');
+      return;
+    }
+    // Opens TPC Network page in a new tab
+    window.open('https://www.tpcindia.com/Network.aspx', '_blank');
+  };
+
   return (
     <div className="p-4 max-w-7xl mx-auto space-y-4 text-sm">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-3">
@@ -51,12 +62,42 @@ export default function Dashboard({ setActiveTab }) {
             Track WhatsApp orders, automatic profit calculations, and shipping stickers.
           </p>
         </div>
-        <button
-          onClick={() => setActiveTab && setActiveTab('new-order')}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3.5 py-2 rounded-lg shadow-sm transition-all flex items-center gap-1.5"
-        >
-          <span>+ Add New Order</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveTab && setActiveTab('new-order')}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3.5 py-2 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>+ Add New Order</span>
+          </button>
+        </div>
+      </div>
+
+      {/* TPC Courier Pincode Checker Quick Widget */}
+      <div className="bg-gradient-to-r from-blue-900 to-slate-900 p-4 rounded-xl shadow-sm text-white flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+          <h3 className="font-bold text-sm flex items-center gap-2">
+            📦 The Professional Couriers (TPC) Pincode Checker
+          </h3>
+          <p className="text-xs text-slate-300 mt-0.5">
+            Check if TPC courier service is available for customer pincodes before dispatching.
+          </p>
+        </div>
+        <form onSubmit={handleTpcCheck} className="flex items-center gap-2 w-full sm:w-auto">
+          <input
+            type="text"
+            maxLength="6"
+            value={checkPincode}
+            onChange={(e) => setCheckPincode(e.target.value)}
+            placeholder="Enter Pincode..."
+            className="p-2 rounded-lg text-xs bg-white text-slate-900 font-semibold w-full sm:w-36 focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition-all cursor-pointer whitespace-nowrap"
+          >
+            Check TPC Service 🔍
+          </button>
+        </form>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -145,7 +186,7 @@ export default function Dashboard({ setActiveTab }) {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 flex justify-between items-center border-b border-gray-100">
           <h3 className="font-bold text-gray-800 text-base">Recent Orders Overview</h3>
-          <button onClick={() => setActiveTab && setActiveTab('orders-list')} className="text-blue-600 hover:text-blue-700 text-xs font-medium">
+          <button onClick={() => setActiveTab && setActiveTab('orders-list')} className="text-blue-600 hover:text-blue-700 text-xs font-medium cursor-pointer">
             View All →
           </button>
         </div>
