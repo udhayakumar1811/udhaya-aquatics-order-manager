@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase/firebaseConfig';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, query, where } from 'firebase/firestore';
 import { useToast } from '../context/ToastContext';
 
 export default function Inventory() {
@@ -24,13 +24,24 @@ export default function Inventory() {
   });
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'inventory'), (snapshot) => {
+    // Fetch only non-deleted inventory items
+    const q = query(collection(db, 'inventory'), where('deleted', '!=', true));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
       setItems(data);
       setLoading(false);
+    }, (error) => {
+      // Fallback if 'deleted' index doesn't exist yet
+      console.warn("Index query fallback:", error);
+      const unsubFallback = onSnapshot(collection(db, 'inventory'), (snap) => {
+        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(i => !i.deleted);
+        setItems(data);
+        setLoading(false);
+      });
+      return () => unsubFallback();
     });
     return () => unsubscribe();
   }, []);
@@ -82,12 +93,13 @@ export default function Inventory() {
     try {
       const payload = {
         ...formData,
-        varietyName: formData.itemName, // Sync for Digital Catalog
-        pricePerPair: Number(formData.sellingPrice) || 0, // Sync for Digital Catalog
+        varietyName: formData.itemName, 
+        pricePerPair: Number(formData.sellingPrice) || 0, 
         stockQty: Number(formData.stockQty) || 0,
         costPrice: Number(formData.costPrice) || 0,
         sellingPrice: Number(formData.sellingPrice) || 0,
         minStockAlert: Number(formData.minStockAlert) || 5,
+        deleted: false
       };
 
       if (editingItem) {
@@ -111,12 +123,15 @@ export default function Inventory() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this item from inventory?")) {
+    if (window.confirm("Move this item to Recycle Bin?")) {
       try {
-        await deleteDoc(doc(db, 'inventory', id));
-        showToast('Item deleted.', 'success');
+        await updateDoc(doc(db, 'inventory', id), {
+          deleted: true,
+          deletedAt: new Date().toISOString()
+        });
+        showToast('Item moved to Recycle Bin.', 'success');
       } catch (error) {
-        console.error("Error deleting inventory item: ", error);
+        console.error("Error moving inventory item to trash: ", error);
         showToast('Could not delete item.', 'error');
       }
     }
@@ -322,7 +337,6 @@ export default function Inventory() {
                 </div>
               </div>
 
-              {/* File Upload Section for Photo & Video */}
               <div className="space-y-3 pt-2 border-t border-gray-100">
                 <p className="text-xs font-bold text-gray-800 uppercase tracking-wider">Upload Media Files (Photo & Video)</p>
                 
