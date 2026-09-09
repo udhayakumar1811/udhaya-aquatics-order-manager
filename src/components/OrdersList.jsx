@@ -8,6 +8,8 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
   const { showToast } = useToast();
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [channelFilter, setChannelFilter] = useState('All');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -131,8 +133,6 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
       setScanProgress(80);
       
       const text = ret.data.text || '';
-      console.log("OCR Extracted Text:", text);
-      
       await worker.terminate();
 
       const match = text.match(/RJP\s*[-:]?\s*\d{6,8}/i) || text.match(/RJP\d+/i);
@@ -153,7 +153,6 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
         setScanModalOrder(null);
       } else {
         setScanning(false);
-        // Open clean fallback input modal if automatic OCR fails
         setManualDocNo('');
         setFallbackInputModal(true);
       }
@@ -243,19 +242,28 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
     showToast('Orders exported.', 'success');
   };
 
-  const filteredOrders = orders.filter(o =>
-    (o.customerName && o.customerName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (o.orderId && o.orderId.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    ((o.phone || o.mobileNumber) && (o.phone || o.mobileNumber).includes(searchTerm)) ||
-    (o.trackingId && o.trackingId.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredOrders = orders.filter(o => {
+    const matchesSearch = 
+      (o.customerName && o.customerName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (o.orderId && o.orderId.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      ((o.phone || o.mobileNumber) && (o.phone || o.mobileNumber).includes(searchTerm)) ||
+      (o.trackingId && o.trackingId.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const currentStatus = o.status || o.orderStatus || 'Pending';
+    const matchesStatus = statusFilter === 'All' || currentStatus === statusFilter;
+
+    const currentChannel = o.salesChannel || 'Direct / Walk-in';
+    const matchesChannel = channelFilter === 'All' || currentChannel === channelFilter;
+
+    return matchesSearch && matchesStatus && matchesChannel;
+  });
 
   return (
     <div className="w-full max-w-full overflow-x-hidden space-y-4 text-xs">
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-lg font-bold text-gray-800">Orders List ({filteredOrders.length})</h1>
-          <p className="text-[11px] text-gray-500 mt-0.5">Manage statuses, tracking IDs, packing photos, AI OCR slip scanner, WhatsApp notify, and bulk updates.</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">Manage statuses, tracking IDs, packing photos, AI OCR slip scanner, WhatsApp notify, and filters.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
@@ -267,6 +275,34 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
               <span>⚡ Bulk Update ({selectedOrderIds.length})</span>
             </button>
           )}
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-[11px] bg-white font-medium cursor-pointer"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Packed">Packed</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+          </select>
+
+          <select
+            value={channelFilter}
+            onChange={(e) => setChannelFilter(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-[11px] bg-white font-medium cursor-pointer"
+          >
+            <option value="All">All Channels</option>
+            <option value="YouTube Shorts">YouTube Shorts</option>
+            <option value="YouTube Post">YouTube Post</option>
+            <option value="Instagram Reels">Instagram Reels</option>
+            <option value="Instagram Post">Instagram Post</option>
+            <option value="WhatsApp Status">WhatsApp Status</option>
+            <option value="WhatsApp Group">WhatsApp Group</option>
+            <option value="Direct / Walk-in">Direct / Walk-in</option>
+            <option value="Facebook / Meta">Facebook / Meta</option>
+          </select>
 
           <button
             onClick={exportToCsv}
@@ -280,7 +316,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
             placeholder="Search orders, phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-[11px] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-48"
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-[11px] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-44"
           />
         </div>
       </div>
@@ -484,7 +520,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
         </div>
       )}
 
-      {/* Fallback Manual Doc No Input Modal (Appears cleanly if OCR cannot read clearly) */}
+      {/* Fallback Manual Doc No Input Modal */}
       {fallbackInputModal && scanModalOrder && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setFallbackInputModal(false)}>
           <div className="bg-white rounded-2xl shadow-xl p-5 max-w-sm w-full space-y-4 text-center" onClick={(e) => e.stopPropagation()}>
