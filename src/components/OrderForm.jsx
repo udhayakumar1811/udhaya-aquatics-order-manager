@@ -11,6 +11,7 @@ const emptyItem = () => ({
   itemType: 'Fish Variety',
   varietyName: '',
   sellingUnit: 'Pair (பேர்)',
+  customWeightValue: '', // For custom gram/kg inputs like 100g, 250g, 500g
   qty: 1,
   costPrice: 0,
   sellingPrice: 0,
@@ -62,7 +63,6 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
     if (name === 'itemType') {
       const nonFishTypes = ['Fish Food', 'Live Food', 'Plants', 'Aquarium Accessories'];
       if (nonFishTypes.includes(value)) {
-        // Automatically switch packing method to Cover and turn off oxygen/double bag
         setFormData(prev => ({
           ...prev,
           boxChoice: 'Cover',
@@ -70,7 +70,6 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
           doubleBag: false
         }));
       } else if (formData.boxChoice === 'Cover') {
-        // Revert back to Cardboard if switched back to fish/combo
         setFormData(prev => ({
           ...prev,
           boxChoice: 'Cardboard',
@@ -126,7 +125,20 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const validationErrors = validateOrderForm(formData, items);
+    // Format sellingUnit string if custom weight is selected (e.g., "250g Pack")
+    const processedItems = items.map(item => {
+      let finalUnit = item.sellingUnit;
+      if (item.sellingUnit === 'Custom Weight (கிராம்/கிலோ)' && item.customWeightValue) {
+        const val = Number(item.customWeightValue);
+        finalUnit = val >= 1000 ? `${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)} kg Pack` : `${val}g Pack`;
+      }
+      return {
+        ...item,
+        sellingUnit: finalUnit
+      };
+    });
+
+    const validationErrors = validateOrderForm(formData, processedItems);
     setErrors(validationErrors);
     if (hasErrors(validationErrors)) {
       showToast('Please fix the highlighted fields.', 'error');
@@ -135,11 +147,11 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
 
     setLoading(true);
     try {
-      const itemsSummary = items.map((i) => `${i.varietyName} (${i.qty})`).join(', ');
+      const itemsSummary = processedItems.map((i) => `${i.varietyName} (${i.qty} ${i.sellingUnit})`).join(', ');
       const payload = {
         ...formData,
         mobileNumber: formData.mobileNumber.trim(),
-        items,
+        items: processedItems,
         itemsSummary,
         revenueTotal,
         billTotal: revenueTotal,
@@ -164,7 +176,7 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
         });
         
         // Trigger automatic stock deduction for new orders
-        await deductInventoryStock(items);
+        await deductInventoryStock(processedItems);
 
         // Trigger Automated WhatsApp Cloud API Message if enabled
         try {
@@ -299,14 +311,30 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">Selling Unit</label>
-                  <select name="sellingUnit" value={item.sellingUnit} onChange={(e) => handleItemChange(index, e)} className="w-full p-2 border rounded text-sm bg-white">
-                    <option value="Pair (பேர்)">Pair (பேர்)</option>
-                    <option value="Trio (ட்ரியோ - 1M+2F)">Trio (ட்ரியோ - 1M+2F)</option>
-                    <option value="Male Only (ஆண்)">Male Only (ஆண்)</option>
-                    <option value="Female Only (பெண்)">Female Only (பெண்)</option>
-                    <option value="Piece / Set (எண்ணிக்கை)">Piece / Set (எண்ணிக்கை)</option>
-                    <option value="Packet / Bottle">Packet / Bottle</option>
-                  </select>
+                  <div className="space-y-1">
+                    <select name="sellingUnit" value={item.sellingUnit} onChange={(e) => handleItemChange(index, e)} className="w-full p-2 border rounded text-sm bg-white">
+                      <option value="Pair (பேர்)">Pair (பேர்)</option>
+                      <option value="Trio (ட்ரியோ - 1M+2F)">Trio (ட்ரியோ - 1M+2F)</option>
+                      <option value="Male Only (ஆண்)">Male Only (ஆண்)</option>
+                      <option value="Female Only (பெண்)">Female Only (பெண்)</option>
+                      <option value="Piece / Set (எண்ணிக்கை)">Piece / Set (எண்ணிக்கை)</option>
+                      <option value="Packet / Bottle">Packet / Bottle</option>
+                      <option value="Custom Weight (கிராம்/கிலோ)">Custom Weight (கிராம்/கிலோ)</option>
+                    </select>
+                    {item.sellingUnit === 'Custom Weight (கிராம்/கிலோ)' && (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          name="customWeightValue"
+                          value={item.customWeightValue || ''}
+                          onChange={(e) => handleItemChange(index, e)}
+                          placeholder="e.g. 250"
+                          className="w-full p-1.5 border border-blue-400 rounded text-xs bg-blue-50 font-semibold"
+                        />
+                        <span className="text-[10px] font-bold text-gray-600 whitespace-nowrap">g / gms</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">Qty</label>
