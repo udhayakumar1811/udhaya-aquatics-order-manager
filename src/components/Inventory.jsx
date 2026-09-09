@@ -256,7 +256,7 @@ export default function Inventory() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl p-5 max-w-md w-full space-y-3 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-xl p-5 max-w-lg w-full space-y-3 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center border-b pb-2">
               <h2 className="text-base font-bold text-gray-900">{editingItem ? 'Edit Stock Item' : 'Add Stock Item'}</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
@@ -354,14 +354,16 @@ export default function Inventory() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block font-medium text-gray-600 mb-1">Cost Price (₹)</label>
+                  <label className="block font-medium text-gray-600 mb-1">Low Stock Alert Limit</label>
                   <input
                     type="number"
-                    name="costPrice"
+                    name="minStockAlert"
                     step="any"
                     min="0"
-                    value={formData.costPrice}
+                    required
+                    value={formData.minStockAlert}
                     onChange={handleChange}
+                    placeholder="e.g. 5"
                     className="w-full p-2 border border-gray-200 rounded-xl bg-white"
                   />
                 </div>
@@ -377,6 +379,19 @@ export default function Inventory() {
                     className="w-full p-2 border border-gray-200 rounded-xl bg-white"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block font-medium text-gray-600 mb-1">Cost Price (₹)</label>
+                <input
+                  type="number"
+                  name="costPrice"
+                  step="any"
+                  min="0"
+                  value={formData.costPrice}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-200 rounded-xl bg-white"
+                />
               </div>
 
               <div className="space-y-2 pt-1 border-t border-gray-100">
