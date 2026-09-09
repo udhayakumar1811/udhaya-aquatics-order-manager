@@ -16,7 +16,7 @@ export default function Expenses() {
     courierName: 'The Professional Couriers',
     courierCharge: '',
     notes: '',
-    items: [{ varietyName: '', quantity: '', unit: 'Pcs', pricePerUnit: '' }]
+    items: [{ varietyName: '', quantity: '', unit: 'Pcs', customWeightValue: '', pricePerUnit: '' }]
   });
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function Expenses() {
   const addItemRow = () => {
     setWholesaleForm(prev => ({
       ...prev,
-      items: [...prev.items, { varietyName: '', quantity: '', unit: 'Pcs', pricePerUnit: '' }]
+      items: [...prev.items, { varietyName: '', quantity: '', unit: 'Pcs', customWeightValue: '', pricePerUnit: '' }]
     }));
   };
 
@@ -81,7 +81,7 @@ export default function Expenses() {
       courierName: 'The Professional Couriers',
       courierCharge: '',
       notes: '',
-      items: [{ varietyName: '', quantity: '', unit: 'Pcs', pricePerUnit: '' }]
+      items: [{ varietyName: '', quantity: '', unit: 'Pcs', customWeightValue: '', pricePerUnit: '' }]
     });
     setShowModal(true);
   };
@@ -94,7 +94,13 @@ export default function Expenses() {
       courierName: order.courierName || 'The Professional Couriers',
       courierCharge: order.courierCharge || '',
       notes: order.notes || '',
-      items: order.items && order.items.length > 0 ? order.items : [{ varietyName: '', quantity: '', unit: 'Pcs', pricePerUnit: '' }]
+      items: order.items && order.items.length > 0 ? order.items.map(i => ({
+        varietyName: i.varietyName || '',
+        quantity: i.quantity || '',
+        unit: i.unit || 'Pcs',
+        customWeightValue: i.customWeightValue || '',
+        pricePerUnit: i.pricePerUnit || ''
+      })) : [{ varietyName: '', quantity: '', unit: 'Pcs', customWeightValue: '', pricePerUnit: '' }]
     });
     setShowModal(true);
   };
@@ -107,13 +113,29 @@ export default function Expenses() {
     }
 
     try {
+      // Process items to format custom weight units correctly
+      const processedItems = wholesaleForm.items.map(item => {
+        let finalUnit = item.unit;
+        if (item.unit === 'Custom Weight (கிராம்/கிலோ)' && item.customWeightValue) {
+          const val = Number(item.customWeightValue);
+          finalUnit = val >= 1000 ? `${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)} kg` : `${val}g`;
+        }
+        return {
+          varietyName: item.varietyName,
+          quantity: item.quantity,
+          unit: finalUnit,
+          customWeightValue: item.customWeightValue || '',
+          pricePerUnit: item.pricePerUnit
+        };
+      });
+
       const totalCost = calculateWholesaleTotal();
       const payload = {
         supplierName: wholesaleForm.supplierName,
         orderDate: wholesaleForm.orderDate,
         courierName: wholesaleForm.courierName,
         courierCharge: Number(wholesaleForm.courierCharge) || 0,
-        items: wholesaleForm.items,
+        items: processedItems,
         totalCost,
         notes: wholesaleForm.notes,
         updatedAt: serverTimestamp()
@@ -264,6 +286,7 @@ export default function Expenses() {
                   >
                     <option value="The Professional Couriers">The Professional Couriers (TPC)</option>
                     <option value="DTDC Express">DTDC Express</option>
+                    <option value="India Post">India Post</option>
                     <option value="Bus / Parcel Service">Bus / Parcel Service</option>
                     <option value="Direct Farm Pickup">Direct Farm Pickup</option>
                     <option value="Direct Shop">Direct Shop</option>
@@ -288,7 +311,7 @@ export default function Expenses() {
                   <span className="text-xs font-bold text-gray-800 uppercase">Ordered Items List</span>
                   <button type="button" onClick={addItemRow} className="bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-lg border border-purple-200 cursor-pointer">+ Add Item</button>
                 </div>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
+                <div className="space-y-2 max-h-56 overflow-y-auto">
                   {wholesaleForm.items.map((item, index) => (
                     <div key={index} className="flex flex-col sm:flex-row gap-2 items-center bg-gray-50 p-2.5 rounded-xl border border-gray-100">
                       <input
@@ -308,17 +331,32 @@ export default function Expenses() {
                         onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
                         className="w-20 p-2 border border-gray-200 rounded-lg text-xs bg-white font-semibold"
                       />
-                      <select
-                        value={item.unit}
-                        onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
-                        className="w-24 p-2 border border-gray-200 rounded-lg text-xs bg-white"
-                      >
-                        <option value="Pcs">Pcs</option>
-                        <option value="Pairs">Pairs</option>
-                        <option value="Kg">Kg</option>
-                        <option value="Packets">Packets</option>
-                        <option value="Tubs">Tubs</option>
-                      </select>
+                      <div className="space-y-1">
+                        <select
+                          value={item.unit}
+                          onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
+                          className="w-32 p-2 border border-gray-200 rounded-lg text-xs bg-white"
+                        >
+                          <option value="Pcs">Pcs</option>
+                          <option value="Pairs">Pairs</option>
+                          <option value="Kg">Kg</option>
+                          <option value="Packets">Packets</option>
+                          <option value="Tubs">Tubs</option>
+                          <option value="Custom Weight (கிராம்/கிலோ)">Custom Weight (கிராம்/கிலோ)</option>
+                        </select>
+                        {item.unit === 'Custom Weight (கிராம்/கிலோ)' && (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              placeholder="e.g. 250"
+                              value={item.customWeightValue || ''}
+                              onChange={(e) => handleItemChange(index, 'customWeightValue', e.target.value)}
+                              className="w-full p-1 border border-blue-400 rounded text-xs bg-blue-50 font-semibold"
+                            />
+                            <span className="text-[10px] font-bold text-gray-600 whitespace-nowrap">g</span>
+                          </div>
+                        )}
+                      </div>
                       <input
                         type="number"
                         min="0"
