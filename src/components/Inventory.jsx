@@ -15,7 +15,8 @@ export default function Inventory() {
     itemName: '',
     category: 'Fish Variety',
     stockQty: '',
-    unit: 'Pairs',
+    unit: 'Pairs (ஜோடி)',
+    customWeightValue: '',
     costPrice: '',
     sellingPrice: '',
     minStockAlert: '5',
@@ -24,7 +25,6 @@ export default function Inventory() {
   });
 
   useEffect(() => {
-    // Fetch only non-deleted inventory items
     const q = query(collection(db, 'inventory'), where('deleted', '!=', true));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
@@ -34,7 +34,6 @@ export default function Inventory() {
       setItems(data);
       setLoading(false);
     }, (error) => {
-      // Fallback if 'deleted' index doesn't exist yet
       console.warn("Index query fallback:", error);
       const unsubFallback = onSnapshot(collection(db, 'inventory'), (snap) => {
         const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(i => !i.deleted);
@@ -50,7 +49,7 @@ export default function Inventory() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: ['stockQty', 'costPrice', 'sellingPrice', 'minStockAlert'].includes(name) 
+      [name]: ['stockQty', 'costPrice', 'sellingPrice', 'minStockAlert', 'customWeightValue'].includes(name) 
         ? (value === '' ? '' : Number(value)) 
         : value
     }));
@@ -62,7 +61,8 @@ export default function Inventory() {
       itemName: '',
       category: 'Fish Variety',
       stockQty: '',
-      unit: 'Pairs',
+      unit: 'Pairs (ஜோடி)',
+      customWeightValue: '',
       costPrice: '',
       sellingPrice: '',
       minStockAlert: 5,
@@ -78,7 +78,8 @@ export default function Inventory() {
       itemName: item.itemName || item.varietyName || '',
       category: item.category || 'Fish Variety',
       stockQty: item.stockQty ?? item.quantity ?? '',
-      unit: item.unit || 'Pairs',
+      unit: item.unit || 'Pairs (ஜோடி)',
+      customWeightValue: item.customWeightValue || '',
       costPrice: item.costPrice ?? '',
       sellingPrice: item.sellingPrice ?? item.pricePerPair ?? '',
       minStockAlert: item.minStockAlert ?? 5,
@@ -90,9 +91,17 @@ export default function Inventory() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    let finalUnit = formData.unit;
+    if (formData.unit === 'Custom Weight (கிராம்/கிலோ)' && formData.customWeightValue) {
+      const val = Number(formData.customWeightValue);
+      finalUnit = val >= 1000 ? `${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)} kg` : `${val}g`;
+    }
+
     try {
       const payload = {
         ...formData,
+        unit: finalUnit,
         varietyName: formData.itemName, 
         pricePerPair: Number(formData.sellingPrice) || 0, 
         stockQty: Number(formData.stockQty) || 0,
@@ -144,7 +153,7 @@ export default function Inventory() {
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Udhaya Aquatics Inventory & Stock</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Manage fish varieties with photo/video file uploads, combos, medicines, and feeds.</p>
+          <p className="text-xs text-gray-500 mt-0.5">Manage fish varieties, feeds, medicines, and accessories with stock tracking.</p>
         </div>
         <div className="flex items-center gap-3">
           {lowStockItemsCount > 0 && (
@@ -242,7 +251,7 @@ export default function Inventory() {
                   required
                   value={formData.itemName}
                   onChange={handleChange}
-                  placeholder="e.g. Full Gold Guppy Pair"
+                  placeholder="e.g. Full Gold Guppy Pair / Artemia Flakes"
                   className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -254,12 +263,14 @@ export default function Inventory() {
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                   >
                     <option value="Fish Variety">Fish Variety</option>
                     <option value="Combo / Offer Pack">Combo / Offer Pack</option>
-                    <option value="Medicines & Feeds">Medicines & Feeds</option>
-                    <option value="Accessories">Accessories</option>
+                    <option value="Fish Food">Fish Food</option>
+                    <option value="Live Food">Live Food</option>
+                    <option value="Plants">Plants</option>
+                    <option value="Aquarium Accessories">Aquarium Accessories</option>
                   </select>
                 </div>
                 <div>
@@ -270,12 +281,25 @@ export default function Inventory() {
                     onChange={handleChange}
                     className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="Pairs">Pairs (ஜோடி)</option>
-                    <option value="Pieces">Pieces (எண்ணிக்கை)</option>
-                    <option value="Packets">Packets (பாக்கெட்)</option>
-                    <option value="Kg">Kg</option>
-                    <option value="Bottles">Bottles</option>
+                    <option value="Pairs (ஜோடி)">Pairs (ஜோடி)</option>
+                    <option value="Trio (ட்ரியோ)">Trio (ட்ரியோ)</option>
+                    <option value="Pieces / Set (எண்ணிக்கை)">Pieces / Set (எண்ணிக்கை)</option>
+                    <option value="Packets / Bottles">Packets / Bottles</option>
+                    <option value="Custom Weight (கிராம்/கிலோ)">Custom Weight (கிராம்/கிலோ)</option>
                   </select>
+                  {formData.unit === 'Custom Weight (கிராம்/கிலோ)' && (
+                    <div className="flex items-center gap-1 mt-1.5">
+                      <input
+                        type="number"
+                        name="customWeightValue"
+                        value={formData.customWeightValue || ''}
+                        onChange={handleChange}
+                        placeholder="e.g. 250"
+                        className="w-full p-1.5 border border-blue-400 rounded-xl text-xs bg-blue-50 font-semibold"
+                      />
+                      <span className="text-[10px] font-bold text-gray-600 whitespace-nowrap">g / gms</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
