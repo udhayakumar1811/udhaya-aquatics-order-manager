@@ -255,13 +255,16 @@ export default function Inventory() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-lg w-full space-y-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-gray-900">{editingItem ? 'Edit Stock Item' : 'Add Stock Item'}</h2>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3" onClick={() => setShowModal(false)}>
+          <div className="bg-white rounded-2xl shadow-xl p-5 max-w-md w-full space-y-3 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center border-b pb-2">
+              <h2 className="text-base font-bold text-gray-900">{editingItem ? 'Edit Stock Item' : 'Add Stock Item'}</h2>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
+            </div>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Item / Variety Name *</label>
+                <label className="block font-medium text-gray-600 mb-1">Item / Variety Name *</label>
                 <input
                   type="text"
                   name="itemName"
@@ -269,18 +272,18 @@ export default function Inventory() {
                   value={formData.itemName}
                   onChange={handleChange}
                   placeholder="e.g. Full Gold Guppy Pair / Artemia Flakes"
-                  className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-2 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Category</label>
+                  <label className="block font-medium text-gray-600 mb-1">Category</label>
                   <select
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                    className="w-full p-2 border border-gray-200 rounded-xl bg-white font-medium"
                   >
                     <option value="Fish Variety">Fish Variety</option>
                     <option value="Combo / Offer Pack">Combo / Offer Pack</option>
@@ -291,12 +294,12 @@ export default function Inventory() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Unit</label>
+                  <label className="block font-medium text-gray-600 mb-1">Unit</label>
                   <select
                     name="unit"
                     value={formData.unit}
                     onChange={handleChange}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2 border border-gray-200 rounded-xl bg-white"
                   >
                     <option value="Pairs (ஜோடி)">Pairs (ஜோடி)</option>
                     <option value="Trio (ட்ரியோ)">Trio (ட்ரியோ)</option>
@@ -305,24 +308,24 @@ export default function Inventory() {
                     <option value="Custom Weight (கிராம்/கிலோ)">Custom Weight (கிராம்/கிலோ)</option>
                   </select>
                   {formData.unit === 'Custom Weight (கிராம்/கிலோ)' && (
-                    <div className="flex items-center gap-1 mt-1.5">
+                    <div className="flex items-center gap-1 mt-1">
                       <input
                         type="number"
                         name="customWeightValue"
                         value={formData.customWeightValue || ''}
                         onChange={handleChange}
                         placeholder="e.g. 250"
-                        className="w-full p-1.5 border border-blue-400 rounded-xl text-xs bg-blue-50 font-semibold"
+                        className="w-full p-1 border border-blue-400 rounded-lg bg-blue-50 font-semibold"
                       />
-                      <span className="text-[10px] font-bold text-gray-600 whitespace-nowrap">g / gms</span>
+                      <span className="text-[10px] font-bold text-gray-600">g / gms</span>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Stock Qty *</label>
+                  <label className="block font-medium text-gray-600 mb-1">Stock Qty *</label>
                   <input
                     type="number"
                     name="stockQty"
@@ -332,26 +335,26 @@ export default function Inventory() {
                     value={formData.stockQty}
                     onChange={handleChange}
                     placeholder="e.g. 20"
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2 border border-gray-200 rounded-xl bg-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Stock Status (நிலை)</label>
+                  <label className="block font-medium text-gray-600 mb-1">Stock Status (நிலை)</label>
                   <select
                     name="manualStatus"
                     value={formData.manualStatus}
                     onChange={handleChange}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white font-bold text-blue-600"
+                    className="w-full p-2 border border-gray-200 rounded-xl font-bold text-blue-600 bg-white"
                   >
-                    <option value="Available">Available (இருப்பில் உள்ளது)</option>
-                    <option value="Out of Stock">Out of Stock (stock இல்லை)</option>
+                    <option value="Available">Available (இருப்பு உள்ளது)</option>
+                    <option value="Out of Stock">Out of Stock (இல்லை)</option>
                   </select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Cost Price (₹)</label>
+                  <label className="block font-medium text-gray-600 mb-1">Cost Price (₹)</label>
                   <input
                     type="number"
                     name="costPrice"
@@ -359,11 +362,11 @@ export default function Inventory() {
                     min="0"
                     value={formData.costPrice}
                     onChange={handleChange}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2 border border-gray-200 rounded-xl bg-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Selling Price (₹)</label>
+                  <label className="block font-medium text-gray-600 mb-1">Selling Price (₹)</label>
                   <input
                     type="number"
                     name="sellingPrice"
@@ -371,62 +374,64 @@ export default function Inventory() {
                     min="0"
                     value={formData.sellingPrice}
                     onChange={handleChange}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2 border border-gray-200 rounded-xl bg-white"
                   />
                 </div>
               </div>
 
-              <div className="space-y-3 pt-2 border-t border-gray-100">
-                <p className="text-xs font-bold text-gray-800 uppercase tracking-wider">Upload Media Files (Photo & Video)</p>
+              <div className="space-y-2 pt-1 border-t border-gray-100">
+                <p className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">Upload Media Files (Photo & Video)</p>
                 
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Upload Photo File</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        const fakeUrl = URL.createObjectURL(file);
-                        setFormData(prev => ({ ...prev, imageUrl: fakeUrl }));
-                        showToast('Photo file attached successfully!', 'success');
-                      }
-                    }}
-                    className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-                  />
-                  {formData.imageUrl && <p className="text-[10px] text-emerald-600 mt-1">✓ Photo attached</p>}
-                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-medium text-gray-600 mb-0.5">Photo File</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const fakeUrl = URL.createObjectURL(file);
+                          setFormData(prev => ({ ...prev, imageUrl: fakeUrl }));
+                          showToast('Photo attached!', 'success');
+                        }
+                      }}
+                      className="w-full text-[10px] text-slate-500 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 cursor-pointer"
+                    />
+                    {formData.imageUrl && <p className="text-[10px] text-emerald-600 mt-0.5">✓ Attached</p>}
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Upload Video File (Optional)</label>
-                  <input
-                    type="file"
-                    accept="video/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        const fakeVideoUrl = URL.createObjectURL(file);
-                        setFormData(prev => ({ ...prev, videoUrl: fakeVideoUrl }));
-                        showToast('Video file attached successfully!', 'success');
-                      }
-                    }}
-                    className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-                  />
-                  {formData.videoUrl && <p className="text-[10px] text-emerald-600 mt-1">✓ Video attached</p>}
+                  <div>
+                    <label className="block font-medium text-gray-600 mb-0.5">Video File</label>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const fakeVideoUrl = URL.createObjectURL(file);
+                          setFormData(prev => ({ ...prev, videoUrl: fakeVideoUrl }));
+                          showToast('Video attached!', 'success');
+                        }
+                      }}
+                      className="w-full text-[10px] text-slate-500 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 cursor-pointer"
+                    />
+                    {formData.videoUrl && <p className="text-[10px] text-emerald-600 mt-0.5">✓ Attached</p>}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-2 border-t">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm cursor-pointer"
+                  className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm cursor-pointer"
                 >
                   {editingItem ? 'Update Stock' : 'Save Stock'}
                 </button>
