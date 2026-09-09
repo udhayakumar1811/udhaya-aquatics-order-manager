@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { db } from '../firebase/firebaseConfig';
 import { collection, onSnapshot, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '../context/ToastContext';
-import { createWorker } from 'tesseract.js';
 
 export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) {
   const { showToast } = useToast();
@@ -22,10 +21,9 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
   const [photoModalOrder, setPhotoModalOrder] = useState(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  // AI OCR Scanning Modal State
+  // AI OCR / Doc No Quick Entry Modal State
   const [scanModalOrder, setScanModalOrder] = useState(null);
-  const [scanning, setScanning] = useState(false);
-  const [scanProgress, setScanProgress] = useState(0);
+  const [manualDocNo, setManualDocNo] = useState('');
 
   useEffect(() => {
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
@@ -114,65 +112,24 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
     reader.readAsDataURL(file);
   };
 
-  const handleScanSlipImage = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !scanModalOrder) return;
-
-    setScanning(true);
-    setScanProgress(20);
+  const handleSaveDocNo = async (e) => {
+    e.preventDefault();
+    if (!manualDocNo.trim() || !scanModalOrder) {
+      showToast('Please enter a valid Doc No.', 'error');
+      return;
+    }
 
     try {
-      const worker = await createWorker('eng');
-      setScanProgress(50);
+      const cleanDocNo = manualDocNo.trim().toUpperCase();
+      const orderRef = doc(db, 'orders', scanModalOrder.id);
+      await updateDoc(orderRef, { trackingId: cleanDocNo, status: 'Shipped', orderStatus: 'Shipped' });
       
-      const ret = await worker.recognize(file);
-      setScanProgress(80);
-      
-      const text = ret.data.text || '';
-      console.log("OCR Extracted Text:", text);
-      
-      await worker.terminate();
-
-      // Flexible Regex to match RJP and digits
-      const match = text.match(/RJP\s*[-:]?\s*\d{6,8}/i) || text.match(/RJP\d+/i);
-      
-      let detectedDocNo = '';
-      if (match) {
-        detectedDocNo = match[0].toUpperCase().replace(/\s+/g, '').replace(/[^A-Z0-9]/g, '');
-      }
-
-      setScanProgress(100);
-
-      if (detectedDocNo && detectedDocNo.startsWith('RJP')) {
-        const orderRef = doc(db, 'orders', scanModalOrder.id);
-        await updateDoc(orderRef, { trackingId: detectedDocNo, status: 'Shipped', orderStatus: 'Shipped' });
-        
-        showToast(`Successfully extracted Doc No: ${detectedDocNo}`, 'success');
-        setScanning(false);
-        setScanModalOrder(null);
-      } else {
-        // Fallback prompt if OCR couldn't clearly capture the text automatically
-        setScanning(false);
-        const manualInput = window.prompt("Could not automatically detect Doc No clearly from image. Please enter Doc No manually (e.g. RJP3905995):");
-        if (manualInput && manualInput.trim()) {
-          const cleanDocNo = manualInput.trim().toUpperCase();
-          const orderRef = doc(db, 'orders', scanModalOrder.id);
-          await updateDoc(orderRef, { trackingId: cleanDocNo, status: 'Shipped', orderStatus: 'Shipped' });
-          showToast(`Doc No ${cleanDocNo} applied successfully!`, 'success');
-          setScanModalOrder(null);
-        }
-      }
+      showToast(`Doc No ${cleanDocNo} applied successfully!`, 'success');
+      setScanModalOrder(null);
+      setManualDocNo('');
     } catch (err) {
-      console.error("Error during OCR scanning:", err);
-      setScanning(false);
-      const manualInput = window.prompt("OCR processing error. Please enter Doc No manually (e.g. RJP3905995):");
-      if (manualInput && manualInput.trim()) {
-        const cleanDocNo = manualInput.trim().toUpperCase();
-        const orderRef = doc(db, 'orders', scanModalOrder.id);
-        await updateDoc(orderRef, { trackingId: cleanDocNo, status: 'Shipped', orderStatus: 'Shipped' });
-        showToast(`Doc No ${cleanDocNo} applied successfully!`, 'success');
-        setScanModalOrder(null);
-      }
+      console.error("Error saving Doc No:", err);
+      showToast('Could not save Doc No.', 'error');
     }
   };
 
@@ -244,7 +201,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-lg font-bold text-gray-800">Orders List ({filteredOrders.length})</h1>
-          <p className="text-[11px] text-gray-500 mt-0.5">Manage statuses, tracking IDs, packing photos, AI OCR slip scanner (Doc No: RJP...), WhatsApp notify, and bulk updates.</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">Manage statuses, tracking IDs, packing photos, receipt Doc No entry, WhatsApp notify, and bulk updates.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
@@ -361,10 +318,10 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
 
                         <div className="flex items-center gap-1">
                           <button
-                            onClick={() => setScanModalOrder(order)}
+                            onClick={() => { setScanModalOrder(order); setManualDocNo(order.trackingId || ''); }}
                             className="text-[10px] bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold px-1.5 py-0.5 rounded border border-purple-100 cursor-pointer"
                           >
-                            🔍 Scan Doc No
+                            🔍 Add Doc No
                           </button>
 
                           {customerPhone && (
@@ -451,24 +408,39 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
         </div>
       )}
 
-      {/* AI OCR Slip Scanner Modal */}
+      {/* Manual Doc No Quick Entry Modal (Replaces flaky OCR prompt) */}
       {scanModalOrder && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => !scanning && setScanModalOrder(null)}>
-          <div className="bg-white rounded-2xl shadow-xl p-5 max-w-sm w-full space-y-3 text-center" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-bold text-gray-900 text-xs">AI OCR Slip Scanner (Doc No: RJP...)</h3>
-            <p className="text-[11px] text-gray-500">Capture TPC receipt slip to extract 'Doc No' automatically.</p>
-            {scanning ? (
-              <div className="py-6 space-y-2">
-                <div className="inline-block animate-spin text-2xl">🔄</div>
-                <p className="text-[11px] font-bold text-blue-600">Extracting Doc No from slip... {scanProgress}%</p>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setScanModalOrder(null)}>
+          <div className="bg-white rounded-2xl shadow-xl p-5 max-w-sm w-full space-y-4 text-center" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-bold text-gray-900 text-sm">Enter TPC Doc No</h3>
+            <p className="text-[11px] text-gray-500">Quickly enter the Doc No from the receipt for order #{scanModalOrder.orderId || scanModalOrder.id.slice(0, 6)}</p>
+            
+            <form onSubmit={handleSaveDocNo} className="space-y-3">
+              <input
+                type="text"
+                required
+                value={manualDocNo}
+                onChange={(e) => setManualDocNo(e.target.value)}
+                placeholder="e.g. RJP3905995"
+                className="w-full p-2.5 border border-gray-300 rounded-xl text-xs font-bold text-center tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setScanModalOrder(null)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-2 rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-xl cursor-pointer shadow"
+                >
+                  Save & Ship
+                </button>
               </div>
-            ) : (
-              <label className="block w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold py-2.5 rounded-xl cursor-pointer">
-                <span>📸 Capture / Upload Receipt Slip</span>
-                <input type="file" accept="image/*" onChange={handleScanSlipImage} className="hidden" />
-              </label>
-            )}
-            <button onClick={() => setScanModalOrder(null)} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-2 rounded-xl cursor-pointer">Cancel</button>
+            </form>
           </div>
         </div>
       )}
