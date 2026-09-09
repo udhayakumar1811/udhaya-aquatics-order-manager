@@ -235,8 +235,11 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
             <label className="block text-xs font-medium text-slate-600 mb-1">Sales Channel / Source (விற்பனை தளம்)</label>
             <select name="salesChannel" value={formData.salesChannel} onChange={handleFieldChange} className="w-full p-2 border rounded text-sm bg-white font-medium">
               <option value="YouTube Shorts">YouTube Shorts</option>
+              <option value="YouTube Post">YouTube Post</option>
               <option value="Instagram Reels">Instagram Reels</option>
+              <option value="Instagram Post">Instagram Post</option>
               <option value="WhatsApp Status">WhatsApp Status</option>
+              <option value="WhatsApp Group">WhatsApp Group</option>
               <option value="Direct / Walk-in">Direct / Walk-in / Farm Visit</option>
               <option value="Facebook / Meta">Facebook / Meta</option>
               <option value="Other / Unknown">Other / Unknown</option>
