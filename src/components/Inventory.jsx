@@ -20,8 +20,7 @@ export default function Inventory() {
     costPrice: '',
     sellingPrice: '',
     minStockAlert: '5',
-    manualStatus: 'Available',
-    hideFromCatalog: false,
+    manualStatus: 'Available', // Manual Available / Out of Stock Dropdown
     imageUrl: '',
     videoUrl: ''
   });
@@ -48,12 +47,12 @@ export default function Inventory() {
   }, []);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : (['stockQty', 'costPrice', 'sellingPrice', 'minStockAlert', 'customWeightValue'].includes(name) 
+      [name]: ['stockQty', 'costPrice', 'sellingPrice', 'minStockAlert', 'customWeightValue'].includes(name) 
         ? (value === '' ? '' : Number(value)) 
-        : value)
+        : value
     }));
   };
 
@@ -69,7 +68,6 @@ export default function Inventory() {
       sellingPrice: '',
       minStockAlert: 5,
       manualStatus: 'Available',
-      hideFromCatalog: false,
       imageUrl: '',
       videoUrl: ''
     });
@@ -91,7 +89,6 @@ export default function Inventory() {
       sellingPrice: item.sellingPrice ?? item.pricePerPair ?? '',
       minStockAlert: item.minStockAlert ?? 5,
       manualStatus: calculatedStatus,
-      hideFromCatalog: item.hideFromCatalog || false,
       imageUrl: item.imageUrl || item.photoUrl || '',
       videoUrl: item.videoUrl || ''
     });
@@ -121,7 +118,6 @@ export default function Inventory() {
         sellingPrice: Number(formData.sellingPrice) || 0,
         minStockAlert: Number(formData.minStockAlert) || 5,
         manualStatus: statusToSave,
-        hideFromCatalog: Boolean(formData.hideFromCatalog),
         deleted: false
       };
 
@@ -211,12 +207,11 @@ export default function Inventory() {
                 {items.map((item) => {
                   const qty = Number(item.stockQty ?? 0);
                   const isAutoOut = qty <= 0;
-                  const isHidden = item.hideFromCatalog;
-                  const currentStatus = isAutoOut ? 'Out of Stock' : (isHidden ? 'Out of Stock (Hidden)' : (item.manualStatus || 'Available'));
+                  const currentStatus = isAutoOut ? 'Out of Stock' : (item.manualStatus || 'Available');
                   const isLow = qty <= Number(item.minStockAlert || 5) && !isAutoOut;
 
                   return (
-                    <tr key={item.id} className={`hover:bg-gray-50/50 transition-colors ${isAutoOut || isHidden ? 'bg-rose-50/30' : isLow ? 'bg-amber-50/30' : ''}`}>
+                    <tr key={item.id} className={`hover:bg-gray-50/50 transition-colors ${currentStatus === 'Out of Stock' ? 'bg-rose-50/30' : isLow ? 'bg-amber-50/30' : ''}`}>
                       <td className="py-3 px-4">
                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                           {item.imageUrl ? (
@@ -228,7 +223,6 @@ export default function Inventory() {
                       </td>
                       <td className="py-3.5 px-4 font-semibold text-gray-900">
                         {item.itemName || item.varietyName}
-                        {isHidden && <span className="ml-1 text-[9px] bg-purple-100 text-purple-700 font-bold px-1 py-0.5 rounded">Catalog Hidden</span>}
                       </td>
                       <td className="py-3.5 px-4">
                         <span className="bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-lg">
@@ -239,7 +233,7 @@ export default function Inventory() {
                         {qty} {item.unit}
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className={`font-bold px-2.5 py-1 rounded-lg text-[10px] ${!isHidden && currentStatus === 'Available' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
+                        <span className={`font-bold px-2.5 py-1 rounded-lg text-[10px] ${currentStatus === 'Available' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
                           {currentStatus}
                         </span>
                       </td>
@@ -262,7 +256,7 @@ export default function Inventory() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl p-5 max-w-lg w-full space-y-3 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-xl p-5 max-w-md w-full space-y-3 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center border-b pb-2">
               <h2 className="text-base font-bold text-gray-900">{editingItem ? 'Edit Stock Item' : 'Add Stock Item'}</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
@@ -345,34 +339,17 @@ export default function Inventory() {
                   />
                 </div>
                 <div>
-                  <label className="block font-medium text-gray-600 mb-1">Stock Status (நிலை)</label>
+                  <label className="block font-medium text-gray-600 mb-1">Stock Status (நிலை) *</label>
                   <select
                     name="manualStatus"
                     value={formData.manualStatus}
                     onChange={handleChange}
-                    className="w-full p-2 border border-gray-200 rounded-xl font-bold text-blue-600 bg-white"
+                    className="w-full p-2 border border-gray-200 rounded-xl font-bold text-blue-600 bg-white shadow-sm"
                   >
                     <option value="Available">Available (இருப்பு உள்ளது)</option>
-                    <option value="Out of Stock">Out of Stock (இல்லை)</option>
+                    <option value="Out of Stock">Out of Stock (இல்லை / மறை)</option>
                   </select>
                 </div>
-              </div>
-
-              {/* Special Checkbox to Hide from Catalog / Show Out of Stock */}
-              <div className="bg-purple-50 p-2.5 rounded-xl border border-purple-200">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="hideFromCatalog"
-                    checked={formData.hideFromCatalog}
-                    onChange={handleChange}
-                    className="w-4 h-4 rounded text-purple-600"
-                  />
-                  <div>
-                    <span className="font-bold text-purple-900 text-[11px]">Hide from Web Catalog (Show Out of Stock)</span>
-                    <p className="text-[10px] text-purple-600">Stock stays inside farm records, but web visitors see it as Out of Stock.</p>
-                  </div>
-                </label>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
