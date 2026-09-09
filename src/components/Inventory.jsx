@@ -20,7 +20,7 @@ export default function Inventory() {
     costPrice: '',
     sellingPrice: '',
     minStockAlert: '5',
-    manualStatus: 'Available', // Manual Available / Out of Stock toggle
+    manualStatus: 'Available',
     imageUrl: '',
     videoUrl: ''
   });
@@ -105,7 +105,6 @@ export default function Inventory() {
     }
 
     const currentQty = Number(formData.stockQty) || 0;
-    // Auto Out of Stock if quantity is 0 or less
     const statusToSave = currentQty <= 0 ? 'Out of Stock' : formData.manualStatus;
 
     try {
@@ -337,15 +336,15 @@ export default function Inventory() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Manual Status</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Stock Status (நிலை)</label>
                   <select
                     name="manualStatus"
                     value={formData.manualStatus}
                     onChange={handleChange}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white font-bold"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white font-bold text-blue-600"
                   >
-                    <option value="Available">Available</option>
-                    <option value="Out of Stock">Out of Stock</option>
+                    <option value="Available">Available (இருப்பில் உள்ளது)</option>
+                    <option value="Out of Stock">Out of Stock (stock இல்லை)</option>
                   </select>
                 </div>
               </div>
