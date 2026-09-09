@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '../firebase/firebaseConfig';
 import { collection, onSnapshot, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '../context/ToastContext';
+import { createWorker } from 'tesseract.js';
 
 export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) {
   const { showToast } = useToast();
@@ -24,6 +25,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
   // AI OCR Scanning Modal State
   const [scanModalOrder, setScanModalOrder] = useState(null);
   const [scanning, setScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
 
   useEffect(() => {
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
@@ -117,33 +119,61 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
     if (!file || !scanModalOrder) return;
 
     setScanning(true);
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      try {
-        const imageDataUrl = reader.result;
+    setScanProgress(20);
 
-        // Simulated AI OCR extraction looking specifically for "RJP" Doc No format from the receipt
-        // Using Tesseract.js pattern matching or extracting based on standard TPC receipt layout
-        setTimeout(async () => {
-          // Fallback random if OCR simulation needs realistic extraction or matching mock pattern
-          // Extracting RJP pattern from receipt image simulation
-          const randomDocNum = 'RJP' + Math.floor(3905000 + Math.random() * 1000);
-          const detectedDocNo = randomDocNum;
+    try {
+      const worker = await createWorker('eng');
+      setScanProgress(50);
+      
+      const ret = await worker.recognize(file);
+      setScanProgress(80);
+      
+      const text = ret.data.text || '';
+      console.log("OCR Extracted Text:", text);
+      
+      await worker.terminate();
 
-          const orderRef = doc(db, 'orders', scanModalOrder.id);
-          await updateDoc(orderRef, { trackingId: detectedDocNo, status: 'Shipped', orderStatus: 'Shipped' });
-          
-          showToast(`Successfully scanned Doc No: ${detectedDocNo}`, 'success');
-          setScanning(false);
-          setScanModalOrder(null);
-        }, 1500);
-      } catch (err) {
-        console.error("Error scanning slip:", err);
-        showToast('Could not scan tracking slip.', 'error');
-        setScanning(false);
+      // Flexible Regex to match RJP and digits
+      const match = text.match(/RJP\s*[-:]?\s*\d{6,8}/i) || text.match(/RJP\d+/i);
+      
+      let detectedDocNo = '';
+      if (match) {
+        detectedDocNo = match[0].toUpperCase().replace(/\s+/g, '').replace(/[^A-Z0-9]/g, '');
       }
-    };
-    reader.readAsDataURL(file);
+
+      setScanProgress(100);
+
+      if (detectedDocNo && detectedDocNo.startsWith('RJP')) {
+        const orderRef = doc(db, 'orders', scanModalOrder.id);
+        await updateDoc(orderRef, { trackingId: detectedDocNo, status: 'Shipped', orderStatus: 'Shipped' });
+        
+        showToast(`Successfully extracted Doc No: ${detectedDocNo}`, 'success');
+        setScanning(false);
+        setScanModalOrder(null);
+      } else {
+        // Fallback prompt if OCR couldn't clearly capture the text automatically
+        setScanning(false);
+        const manualInput = window.prompt("Could not automatically detect Doc No clearly from image. Please enter Doc No manually (e.g. RJP3905995):");
+        if (manualInput && manualInput.trim()) {
+          const cleanDocNo = manualInput.trim().toUpperCase();
+          const orderRef = doc(db, 'orders', scanModalOrder.id);
+          await updateDoc(orderRef, { trackingId: cleanDocNo, status: 'Shipped', orderStatus: 'Shipped' });
+          showToast(`Doc No ${cleanDocNo} applied successfully!`, 'success');
+          setScanModalOrder(null);
+        }
+      }
+    } catch (err) {
+      console.error("Error during OCR scanning:", err);
+      setScanning(false);
+      const manualInput = window.prompt("OCR processing error. Please enter Doc No manually (e.g. RJP3905995):");
+      if (manualInput && manualInput.trim()) {
+        const cleanDocNo = manualInput.trim().toUpperCase();
+        const orderRef = doc(db, 'orders', scanModalOrder.id);
+        await updateDoc(orderRef, { trackingId: cleanDocNo, status: 'Shipped', orderStatus: 'Shipped' });
+        showToast(`Doc No ${cleanDocNo} applied successfully!`, 'success');
+        setScanModalOrder(null);
+      }
+    }
   };
 
   const handleSelectAll = (e) => {
@@ -430,7 +460,7 @@ export default function OrdersList({ onEditOrder, onViewOrder, onOpenSticker }) 
             {scanning ? (
               <div className="py-6 space-y-2">
                 <div className="inline-block animate-spin text-2xl">🔄</div>
-                <p className="text-[11px] font-bold text-blue-600">Extracting Doc No from slip...</p>
+                <p className="text-[11px] font-bold text-blue-600">Extracting Doc No from slip... {scanProgress}%</p>
               </div>
             ) : (
               <label className="block w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold py-2.5 rounded-xl cursor-pointer">
