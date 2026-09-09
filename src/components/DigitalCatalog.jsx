@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase/firebaseConfig';
-import { collection, onSnapshot, query, orderBy, doc, updateDb, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '../context/ToastContext';
 
 export default function DigitalCatalog() {
@@ -140,12 +140,10 @@ export default function DigitalCatalog() {
                       <span className="text-xs text-gray-400 font-medium">No Image Uploaded</span>
                     )}
                     
-                    {/* Stock Status Badge */}
                     <span className={`absolute top-3 right-3 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-lg ${isAvailable ? 'bg-emerald-600/90' : 'bg-rose-600/90'}`}>
                       {isAvailable ? `🟢 Available (${stockQty} ${unit})` : '🔴 Out of Stock'}
                     </span>
 
-                    {/* Edit Button on Card */}
                     <button
                       onClick={() => handleOpenEdit(item)}
                       className="absolute top-3 left-3 bg-white/90 hover:bg-white text-gray-800 text-[11px] font-bold px-2.5 py-1 rounded-lg shadow cursor-pointer transition-all"
@@ -179,7 +177,6 @@ export default function DigitalCatalog() {
         </div>
       )}
 
-      {/* Edit Item Modal */}
       {editModalItem && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setEditModalItem(null)}>
           <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full space-y-4" onClick={(e) => e.stopPropagation()}>
