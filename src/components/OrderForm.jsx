@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase/firebaseConfig';
 import { collection, addDoc, updateDoc, doc, serverTimestamp, getDocs, query, where, getDoc } from 'firebase/firestore';
@@ -39,7 +39,7 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
     paymentMode: initialOrder?.paymentMode || 'UPI General',
     paymentStatus: initialOrder?.paymentStatus || 'Paid',
     orderStatus: initialOrder?.orderStatus || initialOrder?.status || 'Pending',
-    boxChoice: initialOrder?.boxChoice || initialOrder?.boxType || 'Thermocol',
+    boxChoice: initialOrder?.boxChoice || initialOrder?.boxType || 'Cardboard',
     oxygenFilled: initialOrder?.oxygenFilled ?? true,
     doubleBag: initialOrder?.doubleBag ?? true,
     salesChannel: initialOrder?.salesChannel || 'Direct / Walk-in',
@@ -57,6 +57,29 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
     const { name, value } = e.target;
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [name]: value };
+    
+    // Smart Auto-Selection logic based on item type change
+    if (name === 'itemType') {
+      const nonFishTypes = ['Fish Food', 'Live Food', 'Plants', 'Aquarium Accessories'];
+      if (nonFishTypes.includes(value)) {
+        // Automatically switch packing method to Cover and turn off oxygen/double bag
+        setFormData(prev => ({
+          ...prev,
+          boxChoice: 'Cover',
+          oxygenFilled: false,
+          doubleBag: false
+        }));
+      } else if (formData.boxChoice === 'Cover') {
+        // Revert back to Cardboard if switched back to fish/combo
+        setFormData(prev => ({
+          ...prev,
+          boxChoice: 'Cardboard',
+          oxygenFilled: true,
+          doubleBag: true
+        }));
+      }
+    }
+
     setItems(newItems);
   };
 
@@ -260,16 +283,18 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
               <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">Item Type</label>
-                  <select name="itemType" value={item.itemType} onChange={(e) => handleItemChange(index, e)} className="w-full p-2 border rounded text-sm bg-white">
+                  <select name="itemType" value={item.itemType} onChange={(e) => handleItemChange(index, e)} className="w-full p-2 border rounded text-sm bg-white font-medium">
                     <option value="Fish Variety">Fish Variety</option>
                     <option value="Combo / Offer Pack">Combo / Offer Pack</option>
-                    <option value="Plants & Live Feeds">Plants & Live Feeds</option>
+                    <option value="Fish Food">Fish Food</option>
+                    <option value="Live Food">Live Food</option>
+                    <option value="Plants">Plants</option>
                     <option value="Aquarium Accessories">Aquarium Accessories</option>
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Variety Name *</label>
-                  <input type="text" name="varietyName" value={item.varietyName} onChange={(e) => handleItemChange(index, e)} placeholder="e.g. Full Red Guppy" className="w-full p-2 border rounded text-sm bg-white" />
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Variety / Item Name *</label>
+                  <input type="text" name="varietyName" value={item.varietyName} onChange={(e) => handleItemChange(index, e)} placeholder="e.g. Full Red Guppy / Artemia Flakes" className="w-full p-2 border rounded text-sm bg-white" />
                   {errors.items?.[index]?.varietyName && <p className="text-[11px] text-rose-600 mt-1">{errors.items[index].varietyName}</p>}
                 </div>
                 <div>
@@ -280,6 +305,7 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
                     <option value="Male Only (ஆண்)">Male Only (ஆண்)</option>
                     <option value="Female Only (பெண்)">Female Only (பெண்)</option>
                     <option value="Piece / Set (எண்ணிக்கை)">Piece / Set (எண்ணிக்கை)</option>
+                    <option value="Packet / Bottle">Packet / Bottle</option>
                   </select>
                 </div>
                 <div>
@@ -366,15 +392,19 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
       </div>
 
       <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-        <h3 className="font-semibold text-slate-700 mb-3 text-sm">5. PACKING BOX CHOICE</h3>
+        <h3 className="font-semibold text-slate-700 mb-3 text-sm">5. PACKING METHOD & OPTIONS</h3>
         <div className="flex flex-wrap gap-6 items-center">
-          <label className={`flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer bg-white ${formData.boxChoice === 'Thermocol' ? 'border-blue-600 ring-2 ring-blue-100' : 'border-slate-300'}`}>
-            <input type="radio" name="boxChoice" value="Thermocol" checked={formData.boxChoice === 'Thermocol'} onChange={handleFieldChange} />
-            <span className="text-sm font-medium">📦 Thermocol</span>
-          </label>
           <label className={`flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer bg-white ${formData.boxChoice === 'Cardboard' ? 'border-blue-600 ring-2 ring-blue-100' : 'border-slate-300'}`}>
             <input type="radio" name="boxChoice" value="Cardboard" checked={formData.boxChoice === 'Cardboard'} onChange={handleFieldChange} />
-            <span className="text-sm font-medium">📦 Cardboard</span>
+            <span className="text-sm font-medium">📦 Cardboard Box (டீஃபால்ட்)</span>
+          </label>
+          <label className={`flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer bg-white ${formData.boxChoice === 'Thermocol' ? 'border-blue-600 ring-2 ring-blue-100' : 'border-slate-300'}`}>
+            <input type="radio" name="boxChoice" value="Thermocol" checked={formData.boxChoice === 'Thermocol'} onChange={handleFieldChange} />
+            <span className="text-sm font-medium">📦 Thermocol Box</span>
+          </label>
+          <label className={`flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer bg-white ${formData.boxChoice === 'Cover' ? 'border-blue-600 ring-2 ring-blue-100' : 'border-slate-300'}`}>
+            <input type="radio" name="boxChoice" value="Cover" checked={formData.boxChoice === 'Cover'} onChange={handleFieldChange} />
+            <span className="text-sm font-medium">🛍️ Cover / Packing Cover (சாம்பார் ப்ரூஃப்)</span>
           </label>
 
           <div className="flex items-center gap-6 ml-auto">
