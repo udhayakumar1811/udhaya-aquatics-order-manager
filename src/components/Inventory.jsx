@@ -20,8 +20,8 @@ export default function Inventory() {
     costPrice: '',
     sellingPrice: '',
     minStockAlert: '5',
-    manualStatus: 'Available', // Available or Out of Stock
-    hideFromCatalog: false,    // New option: Hide from sale / Show as Out of Stock even if stock exists
+    manualStatus: 'Available',
+    hideFromCatalog: false,
     imageUrl: '',
     videoUrl: ''
   });
@@ -262,7 +262,7 @@ export default function Inventory() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl p-5 max-w-md w-full space-y-3 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-xl p-5 max-w-lg w-full space-y-3 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center border-b pb-2">
               <h2 className="text-base font-bold text-gray-900">{editingItem ? 'Edit Stock Item' : 'Add Stock Item'}</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
@@ -359,7 +359,7 @@ export default function Inventory() {
               </div>
 
               {/* Special Checkbox to Hide from Catalog / Show Out of Stock */}
-              <div className="bg-purple-50/60 p-2.5 rounded-xl border border-purple-100">
+              <div className="bg-purple-50 p-2.5 rounded-xl border border-purple-200">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -369,8 +369,8 @@ export default function Inventory() {
                     className="w-4 h-4 rounded text-purple-600"
                   />
                   <div>
-                    <span className="font-bold text-gray-800 text-[11px]">Hide from Catalog (Show as Out of Stock)</span>
-                    <p className="text-[10px] text-gray-500">Stock will be maintained inside, but customers will see it as Out of Stock on the web link.</p>
+                    <span className="font-bold text-purple-900 text-[11px]">Hide from Web Catalog (Show Out of Stock)</span>
+                    <p className="text-[10px] text-purple-600">Stock stays inside farm records, but web visitors see it as Out of Stock.</p>
                   </div>
                 </label>
               </div>
