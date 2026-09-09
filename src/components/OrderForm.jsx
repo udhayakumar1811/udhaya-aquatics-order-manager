@@ -11,7 +11,7 @@ const emptyItem = () => ({
   itemType: 'Fish Variety',
   varietyName: '',
   sellingUnit: 'Pair (பேர்)',
-  customWeightValue: '', // For custom gram/kg inputs like 100g, 250g, 500g
+  customWeightValue: '',
   qty: 1,
   costPrice: 0,
   sellingPrice: 0,
@@ -59,7 +59,6 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [name]: value };
     
-    // Smart Auto-Selection logic based on item type change
     if (name === 'itemType') {
       const nonFishTypes = ['Fish Food', 'Live Food', 'Plants', 'Aquarium Accessories'];
       if (nonFishTypes.includes(value)) {
@@ -96,7 +95,6 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
   const totalExpenses = itemsCost + Number(formData.actualCourier || 0) + Number(formData.packingBoxCost || 0);
   const netProfit = revenueTotal - totalExpenses;
 
-  // Function to deduct stock automatically from inventory
   const deductInventoryStock = async (orderedItems) => {
     try {
       const inventoryRef = collection(db, 'inventory');
@@ -125,7 +123,6 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Format sellingUnit string if custom weight is selected (e.g., "250g Pack")
     const processedItems = items.map(item => {
       let finalUnit = item.sellingUnit;
       if (item.sellingUnit === 'Custom Weight (கிராம்/கிலோ)' && item.customWeightValue) {
@@ -175,10 +172,8 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
           createdAt: serverTimestamp(),
         });
         
-        // Trigger automatic stock deduction for new orders
         await deductInventoryStock(processedItems);
 
-        // Trigger Automated WhatsApp Cloud API Message if enabled
         try {
           const apiSettingsSnap = await getDoc(doc(db, 'settings', 'whatsappApi'));
           if (apiSettingsSnap.exists() && apiSettingsSnap.data().autoSendOnCreate) {
@@ -378,6 +373,7 @@ export default function OrderForm({ mode = 'create', initialOrder = null, onDone
               <option value="Professional Courier">Professional Courier</option>
               <option value="ST Courier">ST Courier</option>
               <option value="DTDC Courier">DTDC Courier</option>
+              <option value="India Post">India Post</option>
               <option value="Anchal">Anchal</option>
               <option value="Other">Other</option>
             </select>
