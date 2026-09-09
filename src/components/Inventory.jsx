@@ -20,6 +20,7 @@ export default function Inventory() {
     costPrice: '',
     sellingPrice: '',
     minStockAlert: '5',
+    manualStatus: 'Available', // Manual Available / Out of Stock toggle
     imageUrl: '',
     videoUrl: ''
   });
@@ -66,6 +67,7 @@ export default function Inventory() {
       costPrice: '',
       sellingPrice: '',
       minStockAlert: 5,
+      manualStatus: 'Available',
       imageUrl: '',
       videoUrl: ''
     });
@@ -74,15 +76,19 @@ export default function Inventory() {
 
   const handleOpenEdit = (item) => {
     setEditingItem(item);
+    const stock = Number(item.stockQty ?? item.quantity ?? 0);
+    const calculatedStatus = stock <= 0 ? 'Out of Stock' : (item.manualStatus || 'Available');
+
     setFormData({
       itemName: item.itemName || item.varietyName || '',
       category: item.category || 'Fish Variety',
-      stockQty: item.stockQty ?? item.quantity ?? '',
+      stockQty: stock,
       unit: item.unit || 'Pairs (ஜோடி)',
       customWeightValue: item.customWeightValue || '',
       costPrice: item.costPrice ?? '',
       sellingPrice: item.sellingPrice ?? item.pricePerPair ?? '',
       minStockAlert: item.minStockAlert ?? 5,
+      manualStatus: calculatedStatus,
       imageUrl: item.imageUrl || item.photoUrl || '',
       videoUrl: item.videoUrl || ''
     });
@@ -98,16 +104,21 @@ export default function Inventory() {
       finalUnit = val >= 1000 ? `${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)} kg` : `${val}g`;
     }
 
+    const currentQty = Number(formData.stockQty) || 0;
+    // Auto Out of Stock if quantity is 0 or less
+    const statusToSave = currentQty <= 0 ? 'Out of Stock' : formData.manualStatus;
+
     try {
       const payload = {
         ...formData,
         unit: finalUnit,
         varietyName: formData.itemName, 
         pricePerPair: Number(formData.sellingPrice) || 0, 
-        stockQty: Number(formData.stockQty) || 0,
+        stockQty: currentQty,
         costPrice: Number(formData.costPrice) || 0,
         sellingPrice: Number(formData.sellingPrice) || 0,
         minStockAlert: Number(formData.minStockAlert) || 5,
+        manualStatus: statusToSave,
         deleted: false
       };
 
@@ -187,6 +198,7 @@ export default function Inventory() {
                   <th className="py-3 px-4">ITEM NAME</th>
                   <th className="py-3 px-4">CATEGORY</th>
                   <th className="py-3 px-4">CURRENT STOCK</th>
+                  <th className="py-3 px-4">STATUS</th>
                   <th className="py-3 px-4">COST PRICE (₹)</th>
                   <th className="py-3 px-4">SELLING PRICE (₹)</th>
                   <th className="py-3 px-4 text-center">ACTIONS</th>
@@ -194,9 +206,13 @@ export default function Inventory() {
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-700">
                 {items.map((item) => {
-                  const isLow = Number(item.stockQty) <= Number(item.minStockAlert || 5);
+                  const qty = Number(item.stockQty ?? 0);
+                  const isAutoOut = qty <= 0;
+                  const currentStatus = isAutoOut ? 'Out of Stock' : (item.manualStatus || 'Available');
+                  const isLow = qty <= Number(item.minStockAlert || 5) && !isAutoOut;
+
                   return (
-                    <tr key={item.id} className={`hover:bg-gray-50/50 transition-colors ${isLow ? 'bg-rose-50/20' : ''}`}>
+                    <tr key={item.id} className={`hover:bg-gray-50/50 transition-colors ${isAutoOut ? 'bg-rose-50/30' : isLow ? 'bg-amber-50/30' : ''}`}>
                       <td className="py-3 px-4">
                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                           {item.imageUrl ? (
@@ -208,16 +224,18 @@ export default function Inventory() {
                       </td>
                       <td className="py-3.5 px-4 font-semibold text-gray-900">
                         {item.itemName || item.varietyName}
-                        {isLow && <span className="ml-2 text-[10px] bg-rose-100 text-rose-700 font-bold px-1.5 py-0.5 rounded">Low Stock</span>}
                       </td>
                       <td className="py-3.5 px-4">
                         <span className="bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-lg">
                           {item.category}
                         </span>
                       </td>
+                      <td className="py-3.5 px-4 font-bold text-gray-800">
+                        {qty} {item.unit}
+                      </td>
                       <td className="py-3.5 px-4">
-                        <span className={`font-bold px-2.5 py-1 rounded-lg ${isLow ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-emerald-50 text-emerald-700'}`}>
-                          {item.stockQty} {item.unit}
+                        <span className={`font-bold px-2.5 py-1 rounded-lg text-[10px] ${currentStatus === 'Available' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
+                          {currentStatus}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-gray-600">₹{item.costPrice}</td>
@@ -319,18 +337,16 @@ export default function Inventory() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Low Stock Alert Limit</label>
-                  <input
-                    type="number"
-                    name="minStockAlert"
-                    step="any"
-                    min="0"
-                    required
-                    value={formData.minStockAlert}
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Manual Status</label>
+                  <select
+                    name="manualStatus"
+                    value={formData.manualStatus}
                     onChange={handleChange}
-                    placeholder="e.g. 5"
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                    className="w-full p-2.5 border border-gray-200 rounded-xl text-xs bg-white font-bold"
+                  >
+                    <option value="Available">Available</option>
+                    <option value="Out of Stock">Out of Stock</option>
+                  </select>
                 </div>
               </div>
 
