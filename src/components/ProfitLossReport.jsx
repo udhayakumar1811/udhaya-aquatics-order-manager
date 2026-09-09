@@ -23,8 +23,8 @@ export default function ProfitLossReport() {
         const ordersData = ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setOrders(ordersData);
 
-        // Fetch general expenses
-        const expensesSnap = await getDocs(query(collection(db, 'expenses'), orderBy('createdAt', 'desc')));
+        // Fetch general expenses from 'expenses' collection
+        const expensesSnap = await getDocs(query(collection(db, 'expenses'), orderBy('date', 'desc')));
         const expensesData = expensesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setExpenses(expensesData);
       } catch (err) {
@@ -54,7 +54,6 @@ export default function ProfitLossReport() {
 
   // Calculations
   const totalRevenue = filteredOrders.reduce((sum, o) => sum + Number(o.revenueTotal || o.billTotal || 0), 0);
-  const totalShippingCollected = filteredOrders.reduce((sum, o) => sum + Number(o.shippingCharged || 0), 0);
   
   const totalFishCost = filteredOrders.reduce((sum, o) => {
     const itemsCost = o.items ? o.items.reduce((iSum, item) => iSum + (Number(item.costPrice || 0) * Number(item.qty || 1)), 0) : 0;
@@ -64,6 +63,7 @@ export default function ProfitLossReport() {
   const totalActualCourier = filteredOrders.reduce((sum, o) => sum + Number(o.actualCourier || 0), 0);
   const totalPackingBoxCost = filteredOrders.reduce((sum, o) => sum + Number(o.packingBoxCost || 0), 0);
 
+  // General Expenses unified from 'expenses' collection
   const totalGeneralExpenses = filteredExpenses.reduce((sum, e) => sum + Number(e.amount || e.expenseAmount || 0), 0);
 
   const totalBusinessExpenses = totalFishCost + totalActualCourier + totalPackingBoxCost + totalGeneralExpenses;
@@ -91,7 +91,6 @@ export default function ProfitLossReport() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 text-sm print:p-0 print:max-w-none" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      {/* Controls Header (Hidden in Print) */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Monthly Profit & Loss Statement (மாதாந்திர வருமான அறிக்கை)</h1>
@@ -102,7 +101,7 @@ export default function ProfitLossReport() {
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="p-2 border border-gray-200 rounded-xl text-xs bg-white font-medium"
+            className="p-2 border border-gray-200 rounded-xl text-xs bg-white font-medium cursor-pointer"
           >
             {monthsList.map(m => (
               <option key={m.value} value={m.value}>{m.label}</option>
@@ -112,7 +111,7 @@ export default function ProfitLossReport() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
-            className="p-2 border border-gray-200 rounded-xl text-xs bg-white font-medium"
+            className="p-2 border border-gray-200 rounded-xl text-xs bg-white font-medium cursor-pointer"
           >
             <option value="2025">2025</option>
             <option value="2026">2026</option>
@@ -131,7 +130,6 @@ export default function ProfitLossReport() {
       {loading ? (
         <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm">Loading P&L data...</div>
       ) : (
-        /* Printable P&L Sheet */
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6 print:shadow-none print:border-none print:p-0">
           <div className="text-center border-b border-gray-200 pb-5 space-y-1">
             <h2 className="text-2xl font-extrabold text-blue-700">UDHAYA AQUATICS</h2>
@@ -164,7 +162,6 @@ export default function ProfitLossReport() {
             </div>
           </div>
 
-          {/* Detailed Breakdown Table */}
           <div className="space-y-3 pt-2">
             <h4 className="font-bold text-gray-800 text-xs uppercase tracking-wider">Detailed Financial Breakdown</h4>
             

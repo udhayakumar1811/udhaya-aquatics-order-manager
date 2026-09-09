@@ -34,7 +34,7 @@ export default function ExpenseCategoriesBreakdown() {
 
   expenses.forEach(exp => {
     const category = exp.category || exp.expenseCategory || 'Other Expenses';
-    const amount = Number(exp.amount || 0);
+    const amount = Number(exp.amount || exp.expenseAmount || 0);
     totalOverallExpense += amount;
 
     if (!categoryMap[category]) {
@@ -71,7 +71,6 @@ export default function ExpenseCategoriesBreakdown() {
         <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm">No expense records found for breakdown analysis.</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Summary Cards */}
           <div className="md:col-span-1 space-y-4">
             {sortedCategories.map((item, index) => {
               const color = CATEGORY_COLORS[item.category] || '#64748b';
@@ -96,7 +95,6 @@ export default function ExpenseCategoriesBreakdown() {
             })}
           </div>
 
-          {/* Detailed Table */}
           <div className="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-fit">
             <div className="p-4 border-b border-gray-100 font-bold text-gray-800 text-xs uppercase tracking-wider">Detailed Expense Summary</div>
             <div className="overflow-x-auto">

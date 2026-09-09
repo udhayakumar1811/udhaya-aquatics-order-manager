@@ -81,8 +81,8 @@ export default function ReportsAnalytics() {
   const totalRevenue = orders.reduce((sum, o) => sum + Number(o.revenueTotal || o.billTotal || 0), 0);
   const ordersEstimatedProfit = orders.reduce((sum, o) => sum + Number(o.netProfit || 0), 0);
   
-  // Total business expenses (Petrol, courier, maintenance, stock purchases, etc.)
-  const totalBusinessExpenses = expenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
+  // Total business expenses unified from 'expenses' collection (amount or expenseAmount)
+  const totalBusinessExpenses = expenses.reduce((sum, exp) => sum + Number(exp.amount || exp.expenseAmount || 0), 0);
 
   // Real Net Profit = Orders Estimated Profit - General Business Expenses
   const realNetProfit = ordersEstimatedProfit - totalBusinessExpenses;
@@ -121,7 +121,7 @@ export default function ReportsAnalytics() {
         </div>
         <button
           onClick={exportToCsv}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer"
         >
           <span>📊 Export CSV</span>
         </button>
@@ -138,7 +138,7 @@ export default function ReportsAnalytics() {
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">TOTAL EXPENSES (பெட்ரோல்/செலவு)</p>
+              <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">TOTAL EXPENSES (செலவு)</p>
               <h3 className="text-3xl font-extrabold text-rose-600 mt-2">₹{totalBusinessExpenses.toLocaleString()}</h3>
             </div>
 
